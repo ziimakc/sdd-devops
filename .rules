@@ -55,3 +55,6 @@ Our engineering philosophy is **Parsimony-Driven Development (PDD)** — every a
 - Parsimony (no bloat, no premature abstraction)
 
 After completion of `./tasks.yaml` task, mark it as done and update `updatedAt` to current time.
+
+
+Dont create changes summary files in project

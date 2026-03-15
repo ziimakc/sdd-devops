@@ -487,7 +487,8 @@ tasks:
     status: done
     assignee: ziimakc
     createdAt: "2026-03-15T13:20:32Z"
-    updatedAt: "2026-03-15T16:39:07Z"
+    updatedAt: "2026-03-15T17:04:19Z"
+    notes: "Fixed GitHub Actions timeout issues by disabling atomic rollback, using wait=false with manual readiness checks, reducing resources for CI, and extending timeouts to 45min. Resolves 'client rate limiter' errors in Kind clusters."
 
   - id: TASK-060
     requirementId: SCI-ANS-002
@@ -495,4 +496,5 @@ tasks:
     status: done
     assignee: ziimakc
     createdAt: "2026-03-15T13:20:32Z"
-    updatedAt: "2026-03-15T16:50:32Z"
+    updatedAt: "2026-03-15T17:04:19Z"
+    notes: "E2E playbook validates API /healthcheck, /stats endpoints, PostgreSQL connectivity, and pod states with retry logic. All checks include pass/fail reporting per SCI-ANS-002."

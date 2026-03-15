@@ -24,7 +24,7 @@ jobs:
   e2e-test:
     name: End-to-End Deployment Test
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout code
@@ -63,8 +63,16 @@ jobs:
         uses: helm/kind-action@v1
         with:
           cluster_name: sdd-navigator-test
-          wait: 120s
+          wait: 180s
           kubectl_version: v1.29.0
+          config: |
+            kind: Cluster
+            apiVersion: kind.x-k8s.io/v1alpha4
+            nodes:
+            - role: control-plane
+              extraMounts:
+              - hostPath: /tmp
+                containerPath: /tmp
 
       - name: Verify cluster access
         # @req SCI-ANS-001 - Ensure kubectl can communicate with cluster
@@ -122,7 +130,7 @@ jobs:
   e2e-test-ansible-playbook:
     name: E2E Test (Ansible Playbook)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout code
@@ -159,8 +167,16 @@ jobs:
         uses: helm/kind-action@v1
         with:
           cluster_name: sdd-navigator-e2e-test
-          wait: 120s
+          wait: 180s
           kubectl_version: v1.29.0
+          config: |
+            kind: Cluster
+            apiVersion: kind.x-k8s.io/v1alpha4
+            nodes:
+            - role: control-plane
+              extraMounts:
+              - hostPath: /tmp
+                containerPath: /tmp
 
       - name: Verify cluster access
         run: |
@@ -177,11 +193,12 @@ jobs:
         # @req SCI-ANS-003 - Verify idempotency
         env:
           DB_PASSWORD: test-e2e-ansible-${{ github.run_id }}
+          KUBECONFIG: /home/runner/.kube/config
         run: |
           ansible-playbook \
             -i ansible/inventory/local.yml \
             ansible/test-e2e.yml \
-            -v
+            -vv
 
       - name: Display test results on failure
         if: failure()

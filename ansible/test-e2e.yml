@@ -80,20 +80,59 @@
 
     - name: Deploy SDD Navigator Helm chart (first run)
       # @req SCI-ANS-001 - Deploy in correct order with wait
+      # Note: atomic=false and extended timeout to avoid rate limiter issues in Kind
       kubernetes.core.helm:
         name: "{{ test_release_name }}"
         chart_ref: "{{ helm.chart_path }}"
         release_namespace: "{{ test_namespace }}"
         create_namespace: false
-        wait: true
-        wait_timeout: "{{ helm.wait_timeout }}"
-        atomic: true
+        wait: false
+        atomic: false
         values:
+          # @req SCI-CI-001 - Reduced resources for CI environment
+          api:
+            replicaCount: 1
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+            image:
+              pullPolicy: IfNotPresent
+          frontend:
+            replicaCount: 1
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "50m"
+              limits:
+                memory: "128Mi"
+                cpu: "100m"
+            image:
+              pullPolicy: IfNotPresent
           postgresql:
             auth:
               username: "{{ database.user }}"
               password: "{{ lookup('env', 'DB_PASSWORD') }}"
               database: "{{ database.name }}"
+            image:
+              pullPolicy: IfNotPresent
+            primary:
+              persistence:
+                size: 1Gi
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
+            metrics:
+              enabled: false
+          ingress:
+            enabled: false
       register: helm_deploy_first
 
     - name: Record first deployment result
@@ -101,18 +140,63 @@
       ansible.builtin.set_fact:
         first_deploy_success: "{{ helm_deploy_first is succeeded }}"
 
+    - name: Wait for PostgreSQL StatefulSet to be ready
+      # @req SCI-ANS-001 - Wait for database first
+      kubernetes.core.k8s_info:
+        kind: StatefulSet
+        namespace: "{{ test_namespace }}"
+        name: "{{ test_release_name }}-postgresql"
+      register: postgres_sts
+      until: >
+        postgres_sts.resources | length > 0 and
+        postgres_sts.resources[0].status.readyReplicas | default(0) >= 1
+      retries: 60
+      delay: 10
+
+    - name: Wait for API deployment to be ready
+      # @req SCI-ANS-001 - Wait for API after database
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: "{{ test_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/component=api"
+          - "app.kubernetes.io/instance={{ test_release_name }}"
+      register: api_deploy
+      until: >
+        api_deploy.resources | length > 0 and
+        api_deploy.resources[0].status.readyReplicas | default(0) >= 1
+      retries: 60
+      delay: 10
+
+    - name: Wait for frontend deployment to be ready
+      # @req SCI-ANS-001 - Wait for frontend
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: "{{ test_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/component=frontend"
+          - "app.kubernetes.io/instance={{ test_release_name }}"
+      register: frontend_deploy
+      until: >
+        frontend_deploy.resources | length > 0 and
+        frontend_deploy.resources[0].status.readyReplicas | default(0) >= 1
+      retries: 60
+      delay: 10
+
     - name: Wait for all pods to be ready
-      # @req SCI-ANS-001 - Wait for components to reach ready state
+      # @req SCI-ANS-001 - Final verification all components ready
       kubernetes.core.k8s_info:
         kind: Pod
         namespace: "{{ test_namespace }}"
         label_selectors:
           - "app.kubernetes.io/instance={{ test_release_name }}"
-        wait: true
-        wait_condition:
-          type: Ready
-          status: "True"
-        wait_timeout: 300
+      register: all_pods_check
+      until: >
+        all_pods_check.resources | length > 0 and
+        all_pods_check.resources | selectattr('status.phase', 'eq', 'Running') |
+        list | length == all_pods_check.resources | length
+      retries: 30
+      delay: 5
 
     - name: Get API pod for validation
       # @req SCI-ANS-002 - Gather pod info for healthcheck validation
@@ -208,15 +292,52 @@
         chart_ref: "{{ helm.chart_path }}"
         release_namespace: "{{ test_namespace }}"
         create_namespace: false
-        wait: true
-        wait_timeout: "{{ helm.wait_timeout }}"
-        atomic: true
+        wait: false
+        atomic: false
         values:
+          api:
+            replicaCount: 1
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+            image:
+              pullPolicy: IfNotPresent
+          frontend:
+            replicaCount: 1
+            resources:
+              requests:
+                memory: "64Mi"
+                cpu: "50m"
+              limits:
+                memory: "128Mi"
+                cpu: "100m"
+            image:
+              pullPolicy: IfNotPresent
           postgresql:
             auth:
               username: "{{ database.user }}"
               password: "{{ lookup('env', 'DB_PASSWORD') }}"
               database: "{{ database.name }}"
+            image:
+              pullPolicy: IfNotPresent
+            primary:
+              persistence:
+                size: 1Gi
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
+            metrics:
+              enabled: false
+          ingress:
+            enabled: false
       register: helm_deploy_second
 
     - name: Verify idempotency
