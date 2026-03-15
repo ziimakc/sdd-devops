@@ -2,6 +2,23 @@
 
 Infrastructure as Code for deploying the SDD Navigator stack (Rust API, Next.js frontend, PostgreSQL) to Kubernetes using Helm and Ansible.
 
+## 🎯 Quick Demo
+
+**Want to see automated CI validation in action?**
+
+```bash
+./scripts/run-demo.sh
+```
+
+This demonstrates 5 intentional violations caught by the CI pipeline:
+- Missing `@req` annotations
+- Hardcoded values (DRY violations)
+- Missing health checks
+- Plaintext credentials
+- Broken traceability references
+
+**See**: [docs/DEMO_QUICKSTART.md](docs/DEMO_QUICKSTART.md) | [docs/DEMO_SUMMARY.md](docs/DEMO_SUMMARY.md)
+
 ## Overview
 
 This repository implements the DevOps layer for the SDD (Software-Defined Development) Navigator toolchain. It deploys a full observability stack consisting of:
@@ -175,3 +192,29 @@ Every infrastructure file contains `@req` annotations linking to requirements in
 **Missing @req annotations**: Add `# @req REQ-ID` at top of files, run `./scripts/check-traceability.sh`
 
 **Invalid @req reference**: Check `requirements.yaml` for correct requirement IDs, run `./scripts/validate-req-references.sh`
+
+## Demonstration Materials
+
+This repository includes demonstration branches that showcase CI validation capabilities:
+
+| Branch | Violation | Status |
+|--------|-----------|--------|
+| `demo/violation-missing-req` | Missing @req annotation | ✓ Detected by check-traceability.sh |
+| `demo/violation-hardcoded-port` | Hardcoded port number | ✓ Detected by code review |
+| `demo/violation-missing-probe` | No liveness probe | ✓ Detected by validation |
+| `demo/violation-plaintext-password` | Plaintext credentials | ✓ Detected by pattern matching |
+| `demo/violation-orphan-req` | Invalid @req reference | ✓ Detected by validate-req-references.sh |
+
+**Quick Start**: Run `./scripts/run-demo.sh` to test all violations  
+**Documentation**: See [docs/](docs/) directory for complete demonstration guide
+
+## SDD Four Pillars
+
+This infrastructure follows **Specification-Driven Development** principles:
+
+1. **Traceability** - Every artifact annotated with `@req REQ-ID`
+2. **DRY** - Single source of truth in `values.yaml`
+3. **Deterministic Enforcement** - Automated CI validation
+4. **Parsimony** - Minimal, meaningful code only
+
+All infrastructure requirements are defined in `requirements.yaml` and enforced through CI.
