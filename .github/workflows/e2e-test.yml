@@ -58,6 +58,19 @@ jobs:
         with:
           version: "v1.29.0"
 
+      - name: Create kind config
+        # @req SCI-ANS-001 - Create kind cluster configuration file
+        run: |
+          cat <<EOF > kind-config.yaml
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+          - role: control-plane
+            extraMounts:
+            - hostPath: /tmp
+              containerPath: /tmp
+          EOF
+
       - name: Create kind cluster
         # @req SCI-ANS-001 - Create test Kubernetes cluster
         uses: helm/kind-action@v1
@@ -65,14 +78,7 @@ jobs:
           cluster_name: sdd-navigator-test
           wait: 180s
           kubectl_version: v1.29.0
-          config: |
-            kind: Cluster
-            apiVersion: kind.x-k8s.io/v1alpha4
-            nodes:
-            - role: control-plane
-              extraMounts:
-              - hostPath: /tmp
-                containerPath: /tmp
+          config: kind-config.yaml
 
       - name: Verify cluster access
         # @req SCI-ANS-001 - Ensure kubectl can communicate with cluster
@@ -162,6 +168,19 @@ jobs:
         with:
           version: "v1.29.0"
 
+      - name: Create kind config
+        # @req SCI-ANS-001 - Create kind cluster configuration file
+        run: |
+          cat <<EOF > kind-config.yaml
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+          - role: control-plane
+            extraMounts:
+            - hostPath: /tmp
+              containerPath: /tmp
+          EOF
+
       - name: Create kind cluster
         # @req SCI-ANS-001 - Create test Kubernetes cluster
         uses: helm/kind-action@v1
@@ -169,14 +188,7 @@ jobs:
           cluster_name: sdd-navigator-e2e-test
           wait: 180s
           kubectl_version: v1.29.0
-          config: |
-            kind: Cluster
-            apiVersion: kind.x-k8s.io/v1alpha4
-            nodes:
-            - role: control-plane
-              extraMounts:
-              - hostPath: /tmp
-                containerPath: /tmp
+          config: kind-config.yaml
 
       - name: Verify cluster access
         run: |
