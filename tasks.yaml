@@ -7,7 +7,7 @@ tasks:
     title: Initialize project structure
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T13:25:32Z"
 
   - id: TASK-002
@@ -15,7 +15,7 @@ tasks:
     title: Create umbrella Helm chart directory structure
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T13:25:32Z"
 
   - id: TASK-003
@@ -23,7 +23,7 @@ tasks:
     title: Create _helpers.tpl with common labels and selectors
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T13:25:32Z"
 
   # Step 2: Helm Charts - API Service
@@ -32,7 +32,7 @@ tasks:
     title: Create API subchart deployment.yaml with health probes
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-005
@@ -40,7 +40,7 @@ tasks:
     title: Create API subchart service.yaml with configurable port
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-006
@@ -48,7 +48,7 @@ tasks:
     title: Create API ConfigMap for application configuration
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-007
@@ -56,7 +56,7 @@ tasks:
     title: Create API Secret template for database credentials
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-008
@@ -64,7 +64,7 @@ tasks:
     title: Create API subchart values.yaml with all configurable parameters
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-009
@@ -72,7 +72,7 @@ tasks:
     title: Configure API container to run as non-root user
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:02:19Z"
 
   # Step 2: Helm Charts - Frontend
@@ -81,7 +81,7 @@ tasks:
     title: Create frontend subchart deployment.yaml for nginx
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:06:34Z"
 
   - id: TASK-011
@@ -89,7 +89,7 @@ tasks:
     title: Create frontend subchart service.yaml
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:06:34Z"
 
   - id: TASK-012
@@ -97,7 +97,7 @@ tasks:
     title: Create frontend subchart values.yaml with configurable parameters
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:06:34Z"
 
   - id: TASK-013
@@ -105,7 +105,7 @@ tasks:
     title: Configure frontend container to run as non-root user
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:06:34Z"
 
   # Step 2: Helm Charts - PostgreSQL
@@ -114,7 +114,7 @@ tasks:
     title: Add PostgreSQL deployment with PVC for persistence
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:06:34Z"
     notes: "Implemented using Bitnami PostgreSQL chart v13.2.24 as dependency. Production-standard choice over custom StatefulSet."
 
@@ -123,7 +123,7 @@ tasks:
     title: Configure PostgreSQL database name, user via values.yaml
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:06:34Z"
     notes: "Configured via postgresql.auth.username, postgresql.auth.database in values.yaml"
 
@@ -132,7 +132,7 @@ tasks:
     title: Store PostgreSQL credentials in Kubernetes Secret
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:06:34Z"
     notes: "Bitnami chart auto-generates Secret with postgresql.auth.password. PLACEHOLDER_MUST_OVERRIDE ensures visible failure if not set."
 
@@ -141,7 +141,7 @@ tasks:
     title: Configure PostgreSQL data volume with restrictive permissions
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:06:34Z"
     notes: "Security context: runAsUser 1001, fsGroup 1001, runAsNonRoot true. Bitnami handles security hardening."
 
@@ -151,7 +151,7 @@ tasks:
     title: Create ingress.yaml routing /api/* to API service
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-019
@@ -159,7 +159,7 @@ tasks:
     title: Configure ingress routing / to frontend service
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-020
@@ -167,7 +167,7 @@ tasks:
     title: Add configurable TLS support to ingress
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-021
@@ -175,7 +175,7 @@ tasks:
     title: Create umbrella chart Chart.yaml with subchart dependencies
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-022
@@ -183,7 +183,7 @@ tasks:
     title: Create umbrella chart values.yaml with global configuration
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-023
@@ -191,7 +191,7 @@ tasks:
     title: Ensure all container images use explicit version tags
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:25:00Z"
 
   # Step 3: Ansible Orchestration
@@ -200,7 +200,7 @@ tasks:
     title: Create Ansible playbook.yml with deploy and validate roles
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-025
@@ -208,7 +208,7 @@ tasks:
     title: Create deploy role to create namespace
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-026
@@ -216,7 +216,7 @@ tasks:
     title: Create deploy role task to create Kubernetes secrets
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-027
@@ -224,7 +224,7 @@ tasks:
     title: Create deploy role task for helm upgrade with wait
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-028
@@ -232,7 +232,7 @@ tasks:
     title: Add kubectl wait for pods to reach Ready state
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-029
@@ -240,7 +240,7 @@ tasks:
     title: Create validate role to check API /healthcheck endpoint
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-030
@@ -248,7 +248,7 @@ tasks:
     title: Create validate role to check API /stats endpoint
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-031
@@ -256,7 +256,7 @@ tasks:
     title: Create validate role to verify all pods Running
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-032
@@ -264,7 +264,7 @@ tasks:
     title: Create validate role to check PostgreSQL via pg_isready
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-033
@@ -272,7 +272,7 @@ tasks:
     title: Add Ansible debug output for validation pass/fail results
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-034
@@ -280,7 +280,7 @@ tasks:
     title: Ensure all Ansible tasks are idempotent with proper guards
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
     notes: "All tasks use idempotent modules: k8s (state:present), helm (3-way merge), k8s_info (read-only), k8s_exec (read-only validation). Annotations document idempotency mechanisms."
 
@@ -289,7 +289,7 @@ tasks:
     title: Test playbook idempotency with second run verification
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
     notes: "Created scripts/test-idempotency.sh that runs playbook twice and verifies zero changes on second run. Script fails if any task reports 'changed' status."
 
@@ -298,7 +298,7 @@ tasks:
     title: Create ansible/group_vars/all.yml with deployment variables
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-037
@@ -306,7 +306,7 @@ tasks:
     title: Create ansible/inventory/local.yml for localhost deployment
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:32:23Z"
 
   # Step 4: CI Pipeline
@@ -315,7 +315,7 @@ tasks:
     title: Create GitHub Actions workflow infra-ci.yml
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-039
@@ -323,7 +323,7 @@ tasks:
     title: Add helm-lint job to CI workflow
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-040
@@ -331,7 +331,7 @@ tasks:
     title: Add helm-validate job with kubeconform validation
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-041
@@ -339,7 +339,7 @@ tasks:
     title: Add ansible-lint job to CI workflow
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-042
@@ -347,7 +347,7 @@ tasks:
     title: Add yamllint job to CI workflow
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-043
@@ -355,7 +355,7 @@ tasks:
     title: Create scripts/check-traceability.sh for @req validation
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-044
@@ -363,7 +363,7 @@ tasks:
     title: Add traceability check job to CI workflow
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-045
@@ -371,7 +371,7 @@ tasks:
     title: Add CI summary job for consolidated pass/fail report
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-046
@@ -379,7 +379,7 @@ tasks:
     title: Configure parallel execution for independent CI jobs
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:41:57Z"
 
   # Step 4: Traceability
@@ -388,7 +388,7 @@ tasks:
     title: Add @req annotations to all Helm template files
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:48:35Z"
 
   - id: TASK-048
@@ -396,7 +396,7 @@ tasks:
     title: Add @req annotations to all Ansible task files
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:48:35Z"
 
   - id: TASK-049
@@ -404,7 +404,7 @@ tasks:
     title: Add @req annotations to all CI job definitions
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:48:35Z"
 
   - id: TASK-050
@@ -412,7 +412,7 @@ tasks:
     title: Validate all @req annotations reference existing requirements
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T15:48:35Z"
 
   # Step 5: Demonstration and Documentation
@@ -421,7 +421,7 @@ tasks:
     title: Create demo/violation branch with missing @req annotation
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-052
@@ -429,7 +429,7 @@ tasks:
     title: Create demo/violation with hardcoded port number
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-053
@@ -437,7 +437,7 @@ tasks:
     title: Create demo/violation with missing liveness probe
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-054
@@ -445,7 +445,7 @@ tasks:
     title: Create demo/violation with plaintext password in values.yaml
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-055
@@ -453,24 +453,24 @@ tasks:
     title: Create demo/violation with orphan @req reference
     status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
     updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-056
     requirementId: SCI-TRACE-001
     title: Document CI passing run and violation run in README.md
-    status: open
+    status: done
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T13:20:32Z"
 
   - id: TASK-057
     requirementId: SCI-HELM-002
     title: Document PostgreSQL deployment choice in README.md
     status: open
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T13:20:32Z"
 
   # Testing and Validation
   - id: TASK-058
@@ -478,21 +478,21 @@ tasks:
     title: Test full CI pipeline on main branch
     status: open
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T13:20:32Z"
 
   - id: TASK-059
     requirementId: SCI-ANS-001
     title: Perform end-to-end deployment test with Ansible
     status: open
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T13:20:32Z"
 
   - id: TASK-060
     requirementId: SCI-ANS-002
     title: Verify all post-deploy validation checks pass
     status: open
     assignee: ziimakc
-    createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    createdAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T13:20:32Z"
