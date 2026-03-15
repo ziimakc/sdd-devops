@@ -58,7 +58,7 @@ postgresql:
   enabled: true
   auth:
     username: sdd_user
-    password: "PLACEHOLDER_MUST_OVERRIDE" # @req SCI-HELM-005
+    password: "MySecretPassword123!" # VIOLATION: plaintext password
     database: sdd_navigator
   primary:
     persistence:
