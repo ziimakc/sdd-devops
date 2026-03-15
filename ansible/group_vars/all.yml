@@ -15,6 +15,9 @@ helm:
   wait_timeout: 300s
   atomic: true
 
+api:
+  port: 8080
+
 database:
   user: sdd_user
   password: "{{ lookup('env', 'DB_PASSWORD') | default('changeme', true) }}"

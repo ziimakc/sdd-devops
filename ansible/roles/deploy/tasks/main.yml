@@ -2,6 +2,7 @@
 # @req SCI-ANS-003
 ---
 - name: Create Kubernetes namespace
+  # @req SCI-ANS-003 - k8s module with state:present is idempotent
   kubernetes.core.k8s:
     name: "{{ kubernetes.namespace }}"
     api_version: v1
@@ -9,6 +10,7 @@
     state: present
 
 - name: Create database secret
+  # @req SCI-ANS-003 - k8s module with state:present is idempotent
   kubernetes.core.k8s:
     state: present
     namespace: "{{ kubernetes.namespace }}"
@@ -23,6 +25,8 @@
         password: "{{ database.password }}"
 
 - name: Deploy SDD Navigator Helm chart
+  # @req SCI-ANS-001 - Deploy in correct order with wait
+  # @req SCI-ANS-003 - helm module is idempotent by design
   kubernetes.core.helm:
     name: "{{ helm.release_name }}"
     chart_ref: "{{ helm.chart_path }}"
@@ -32,13 +36,15 @@
     wait_timeout: "{{ helm.wait_timeout }}"
     atomic: "{{ helm.atomic }}"
     values:
-      database:
-        user: "{{ database.user }}"
-        password: "{{ database.password }}"
-        name: "{{ database.name }}"
-        port: "{{ database.port }}"
+      postgresql:
+        auth:
+          username: "{{ database.user }}"
+          password: "{{ database.password }}"
+          database: "{{ database.name }}"
 
 - name: Wait for API pods to be ready
+  # @req SCI-ANS-001 - Wait for each component to reach ready state
+  # @req SCI-ANS-003 - k8s_info with wait is idempotent
   kubernetes.core.k8s_info:
     kind: Pod
     namespace: "{{ kubernetes.namespace }}"
@@ -52,6 +58,8 @@
     wait_timeout: "{{ deployment.wait_for_ready_timeout }}"
 
 - name: Wait for frontend pods to be ready
+  # @req SCI-ANS-001 - Wait for each component to reach ready state
+  # @req SCI-ANS-003 - k8s_info with wait is idempotent
   kubernetes.core.k8s_info:
     kind: Pod
     namespace: "{{ kubernetes.namespace }}"
@@ -65,6 +73,8 @@
     wait_timeout: "{{ deployment.wait_for_ready_timeout }}"
 
 - name: Wait for database to be ready
+  # @req SCI-ANS-001 - Wait for each component to reach ready state
+  # @req SCI-ANS-003 - k8s_info with wait is idempotent
   kubernetes.core.k8s_info:
     kind: Pod
     namespace: "{{ kubernetes.namespace }}"

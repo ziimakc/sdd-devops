@@ -198,114 +198,116 @@ tasks:
   - id: TASK-024
     requirementId: SCI-ANS-001
     title: Create Ansible playbook.yml with deploy and validate roles
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-025
     requirementId: SCI-ANS-001
     title: Create deploy role to create namespace
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-026
     requirementId: SCI-ANS-001
     title: Create deploy role task to create Kubernetes secrets
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-027
     requirementId: SCI-ANS-001
     title: Create deploy role task for helm upgrade with wait
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-028
     requirementId: SCI-ANS-001
     title: Add kubectl wait for pods to reach Ready state
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-029
     requirementId: SCI-ANS-002
     title: Create validate role to check API /healthcheck endpoint
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-030
     requirementId: SCI-ANS-002
     title: Create validate role to check API /stats endpoint
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-031
     requirementId: SCI-ANS-002
     title: Create validate role to verify all pods Running
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-032
     requirementId: SCI-ANS-002
     title: Create validate role to check PostgreSQL via pg_isready
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-033
     requirementId: SCI-ANS-002
     title: Add Ansible debug output for validation pass/fail results
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-034
     requirementId: SCI-ANS-003
     title: Ensure all Ansible tasks are idempotent with proper guards
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
+    notes: "All tasks use idempotent modules: k8s (state:present), helm (3-way merge), k8s_info (read-only), k8s_exec (read-only validation). Annotations document idempotency mechanisms."
 
   - id: TASK-035
     requirementId: SCI-ANS-003
     title: Test playbook idempotency with second run verification
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
+    notes: "Created scripts/test-idempotency.sh that runs playbook twice and verifies zero changes on second run. Script fails if any task reports 'changed' status."
 
   - id: TASK-036
     requirementId: SCI-ANS-001
     title: Create ansible/group_vars/all.yml with deployment variables
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   - id: TASK-037
     requirementId: SCI-ANS-001
     title: Create ansible/inventory/local.yml for localhost deployment
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:32:23Z"
 
   # Step 4: CI Pipeline
   - id: TASK-038
