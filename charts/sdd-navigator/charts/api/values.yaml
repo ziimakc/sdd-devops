@@ -1,0 +1,41 @@
+# @req SCI-HELM-001
+# @req SCI-HELM-006
+# API service configuration - values inherited from parent umbrella chart
+
+image:
+  repository: sdd-coverage-api
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+port: 8080
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+
+livenessProbe:
+  path: /healthcheck
+  initialDelaySeconds: 10
+  periodSeconds: 15
+
+readinessProbe:
+  path: /healthcheck
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+config:
+  logLevel: info
+  dbHost: postgresql
+  dbPort: 5432
+  dbName: sdd_navigator
+  dbUser: sdd_user

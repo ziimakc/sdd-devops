@@ -1,0 +1,70 @@
+# @req SCI-HELM-006
+# Single source of truth for all configurable values
+
+global:
+  namespace: sdd-navigator
+
+api:
+  image:
+    repository: sdd-coverage-api
+    tag: "0.1.0" # @req SCI-SEC-001
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  port: 8080
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  securityContext:
+    runAsNonRoot: true # @req SCI-SEC-001
+    runAsUser: 1000
+  livenessProbe: # @req SCI-HELM-001
+    path: /healthcheck
+    initialDelaySeconds: 10
+    periodSeconds: 15
+  readinessProbe: # @req SCI-HELM-001
+    path: /healthcheck
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  config: # @req SCI-HELM-005
+    logLevel: info
+    dbHost: "{{ .Release.Name }}-postgresql"
+
+frontend:
+  image:
+    repository: sdd-navigator-frontend
+    tag: "0.1.0" # @req SCI-SEC-001
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  port: 80
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  securityContext:
+    runAsNonRoot: true # @req SCI-SEC-001
+    runAsUser: 101
+
+database: # @req SCI-HELM-002
+  name: sdd_navigator
+  user: sdd_user
+  password: "PLACEHOLDER_MUST_OVERRIDE" # @req SCI-HELM-005
+  port: 5432
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+
+ingress: # @req SCI-HELM-004
+  enabled: true
+  className: nginx
+  host: sdd-navigator.local
+  tls:
+    enabled: false
+    secretName: ""

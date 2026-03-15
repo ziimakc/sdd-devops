@@ -52,3 +52,5 @@ Our engineering philosophy is **Parsimony-Driven Development (PDD)** — every a
 - DRY violations (same value in multiple places)
 - Deterministic checks in CI (lint, validation, dry-run)
 - Parsimony (no bloat, no premature abstraction)
+
+After completion of `./tasks.yaml` task, mark it as done and update `updatedAt` to current time.

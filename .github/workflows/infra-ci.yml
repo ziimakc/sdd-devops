@@ -1,0 +1,138 @@
+# @req SCI-CI-001
+# @req SCI-CI-002
+# @req SCI-TRACE-001
+name: Infrastructure CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-yaml:
+    name: YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run yamllint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: .
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 120
+                level: warning
+              indentation:
+                spaces: 2
+              comments:
+                min-spaces-from-content: 1
+
+  lint-ansible:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ansible-lint
+        run: pip install ansible-lint ansible-core
+
+      - name: Run ansible-lint
+        run: ansible-lint ansible/playbook.yml
+        working-directory: ${{ github.workspace }}
+
+  lint-helm:
+    name: Helm Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.14.0"
+
+      - name: Lint umbrella chart
+        run: helm lint charts/sdd-navigator
+
+      - name: Lint API subchart
+        run: helm lint charts/sdd-navigator/charts/api
+
+      - name: Lint frontend subchart
+        run: helm lint charts/sdd-navigator/charts/frontend
+
+  validate-manifests:
+    name: Validate Kubernetes Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.14.0"
+
+      - name: Install kubeconform
+        run: |
+          curl -L https://github.com/yannh/kubeconform/releases/download/v0.6.4/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Render Helm templates
+        run: |
+          helm template sdd-navigator charts/sdd-navigator \
+            --set database.password=test-password \
+            --output-dir /tmp/rendered
+
+      - name: Validate rendered manifests
+        run: |
+          kubeconform \
+            -strict \
+            -ignore-missing-schemas \
+            -summary \
+            -output json \
+            /tmp/rendered
+
+  check-traceability:
+    name: Check Traceability Annotations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Make script executable
+        run: chmod +x scripts/check-traceability.sh
+
+      - name: Run traceability check
+        run: ./scripts/check-traceability.sh
+
+  dry-run-deployment:
+    name: Helm Dry-Run Deployment
+    runs-on: ubuntu-latest
+    needs: [lint-helm, validate-manifests]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.14.0"
+
+      - name: Dry-run Helm install
+        run: |
+          helm install sdd-navigator charts/sdd-navigator \
+            --dry-run \
+            --debug \
+            --set database.password=test-password

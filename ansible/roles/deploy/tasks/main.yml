@@ -1,0 +1,77 @@
+# @req SCI-ANS-001
+# @req SCI-ANS-003
+---
+- name: Create Kubernetes namespace
+  kubernetes.core.k8s:
+    name: "{{ kubernetes.namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Create database secret
+  kubernetes.core.k8s:
+    state: present
+    namespace: "{{ kubernetes.namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ helm.release_name }}-db-credentials"
+      type: Opaque
+      stringData:
+        username: "{{ database.user }}"
+        password: "{{ database.password }}"
+
+- name: Deploy SDD Navigator Helm chart
+  kubernetes.core.helm:
+    name: "{{ helm.release_name }}"
+    chart_ref: "{{ helm.chart_path }}"
+    release_namespace: "{{ kubernetes.namespace }}"
+    create_namespace: "{{ kubernetes.create_namespace }}"
+    wait: "{{ helm.wait }}"
+    wait_timeout: "{{ helm.wait_timeout }}"
+    atomic: "{{ helm.atomic }}"
+    values:
+      database:
+        user: "{{ database.user }}"
+        password: "{{ database.password }}"
+        name: "{{ database.name }}"
+        port: "{{ database.port }}"
+
+- name: Wait for API pods to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ kubernetes.namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/component=api"
+      - "app.kubernetes.io/instance={{ helm.release_name }}"
+    wait: true
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: "{{ deployment.wait_for_ready_timeout }}"
+
+- name: Wait for frontend pods to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ kubernetes.namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/component=frontend"
+      - "app.kubernetes.io/instance={{ helm.release_name }}"
+    wait: true
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: "{{ deployment.wait_for_ready_timeout }}"
+
+- name: Wait for database to be ready
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ kubernetes.namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/name=postgresql"
+    wait: true
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: "{{ deployment.wait_for_ready_timeout }}"

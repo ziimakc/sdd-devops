@@ -1,0 +1,24 @@
+# @req SCI-HELM-003
+# @req SCI-HELM-006
+# Frontend service configuration - values inherited from parent umbrella chart
+
+image:
+  repository: sdd-navigator-frontend
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+port: 80
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 101

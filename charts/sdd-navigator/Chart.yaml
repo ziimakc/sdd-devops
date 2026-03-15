@@ -1,0 +1,7 @@
+# @req SCI-HELM-006
+apiVersion: v2
+name: sdd-navigator
+description: SDD Navigator umbrella chart - API, frontend, and database
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

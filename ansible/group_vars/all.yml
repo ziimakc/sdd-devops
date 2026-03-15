@@ -1,0 +1,32 @@
+# @req SCI-ANS-001
+# @req SCI-ANS-003
+# @req SCI-HELM-006
+# Single source of truth for Ansible deployment variables
+---
+kubernetes:
+  namespace: sdd-navigator
+  create_namespace: true
+  context: ""  # Use current context if empty
+
+helm:
+  chart_path: "../charts/sdd-navigator"
+  release_name: sdd-navigator
+  wait: true
+  wait_timeout: 300s
+  atomic: true
+
+database:
+  user: sdd_user
+  password: "{{ lookup('env', 'DB_PASSWORD') | default('changeme', true) }}"
+  name: sdd_navigator
+  port: 5432
+
+validation:
+  api_healthcheck_path: /healthcheck
+  api_stats_path: /stats
+  expected_status: 200
+  retry_count: 10
+  retry_delay: 5
+
+deployment:
+  wait_for_ready_timeout: 300
