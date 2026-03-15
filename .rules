@@ -38,6 +38,7 @@ Our engineering philosophy is **Parsimony-Driven Development (PDD)** — every a
 - Minimum YAML/config preserving full semantics
 - Directive vocabulary: MUST / SHOULD / MAY / DO NOT
 - No redundant comments restating what manifest already shows
+- No redundant documentation, code should explain itself, document only quick commands and general overview
 - Every resource, every line earns its place
 
 ## DevOps-Specific Practices

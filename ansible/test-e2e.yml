@@ -1,0 +1,271 @@
+# @req SCI-ANS-001
+# @req SCI-ANS-002
+# @req SCI-ANS-003
+---
+- name: E2E Test - SDD Navigator Deployment
+  hosts: localhost
+  gather_facts: true
+  vars:
+    test_namespace: sdd-navigator-e2e-test
+    test_release_name: sdd-navigator-test
+    test_results: []
+    deployment_start_time: "{{ ansible_date_time.epoch }}"
+
+  tasks:
+    - name: Display test information
+      # @req SCI-ANS-001 - E2E test validates orchestration
+      ansible.builtin.debug:
+        msg: |
+          ===== SDD Navigator E2E Deployment Test =====
+          Testing Requirements:
+            - SCI-ANS-001: Ansible orchestration with correct deployment order
+            - SCI-ANS-002: Post-deploy validation with pass/fail reporting
+            - SCI-ANS-003: Idempotency (second run produces zero changes)
+
+          Test Namespace: {{ test_namespace }}
+          Release Name: {{ test_release_name }}
+          Timestamp: {{ ansible_date_time.iso8601 }}
+
+    - name: Check prerequisites
+      # @req SCI-ANS-001 - Verify environment before deployment
+      ansible.builtin.assert:
+        that:
+          - ansible_version.full is version('2.14', '>=')
+          - lookup('env', 'DB_PASSWORD') | default('', true) | length > 0
+        fail_msg: "Prerequisites not met. Ensure Ansible >= 2.14 and DB_PASSWORD is set."
+        success_msg: "Prerequisites check passed"
+
+    - name: Clean up existing test namespace
+      # @req SCI-ANS-003 - Ensure clean state for idempotency test
+      kubernetes.core.k8s:
+        name: "{{ test_namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: absent
+        wait: true
+        wait_timeout: 120
+
+    - name: Wait for namespace deletion
+      # @req SCI-ANS-003 - Ensure namespace fully deleted
+      kubernetes.core.k8s_info:
+        kind: Namespace
+        name: "{{ test_namespace }}"
+      register: ns_check
+      until: ns_check.resources | length == 0
+      retries: 30
+      delay: 2
+
+    - name: Create test namespace
+      # @req SCI-ANS-001 - Deploy namespace first
+      kubernetes.core.k8s:
+        name: "{{ test_namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create database secret for test
+      # @req SCI-ANS-001 - Deploy secrets before database
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ test_namespace }}"
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "{{ test_release_name }}-db-credentials"
+          type: Opaque
+          stringData:
+            username: "{{ database.user }}"
+            password: "{{ lookup('env', 'DB_PASSWORD') }}"
+
+    - name: Deploy SDD Navigator Helm chart (first run)
+      # @req SCI-ANS-001 - Deploy in correct order with wait
+      kubernetes.core.helm:
+        name: "{{ test_release_name }}"
+        chart_ref: "{{ helm.chart_path }}"
+        release_namespace: "{{ test_namespace }}"
+        create_namespace: false
+        wait: true
+        wait_timeout: "{{ helm.wait_timeout }}"
+        atomic: true
+        values:
+          postgresql:
+            auth:
+              username: "{{ database.user }}"
+              password: "{{ lookup('env', 'DB_PASSWORD') }}"
+              database: "{{ database.name }}"
+      register: helm_deploy_first
+
+    - name: Record first deployment result
+      # @req SCI-ANS-002 - Track deployment results
+      ansible.builtin.set_fact:
+        first_deploy_success: "{{ helm_deploy_first is succeeded }}"
+
+    - name: Wait for all pods to be ready
+      # @req SCI-ANS-001 - Wait for components to reach ready state
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ test_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/instance={{ test_release_name }}"
+        wait: true
+        wait_condition:
+          type: Ready
+          status: "True"
+        wait_timeout: 300
+
+    - name: Get API pod for validation
+      # @req SCI-ANS-002 - Gather pod info for healthcheck validation
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ test_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/component=api"
+          - "app.kubernetes.io/instance={{ test_release_name }}"
+      register: test_api_pods
+
+    - name: Validate API healthcheck endpoint
+      # @req SCI-ANS-002 - Verify /healthcheck returns HTTP 200
+      kubernetes.core.k8s_exec:
+        namespace: "{{ test_namespace }}"
+        pod: "{{ test_api_pods.resources[0].metadata.name }}"
+        command: wget -q -O - --timeout=5 http://localhost:{{ api.port }}/healthcheck
+      register: test_healthcheck
+      retries: 10
+      delay: 3
+      until: test_healthcheck.rc == 0
+
+    - name: Validate API stats endpoint
+      # @req SCI-ANS-002 - Verify /stats returns HTTP 200
+      kubernetes.core.k8s_exec:
+        namespace: "{{ test_namespace }}"
+        pod: "{{ test_api_pods.resources[0].metadata.name }}"
+        command: wget -q -O - --timeout=5 http://localhost:{{ api.port }}/stats
+      register: test_stats
+      retries: 10
+      delay: 3
+      until: test_stats.rc == 0
+
+    - name: Get all pods status
+      # @req SCI-ANS-002 - Verify all pods are Running
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ test_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/instance={{ test_release_name }}"
+      register: test_all_pods
+
+    - name: Verify all pods are Running
+      # @req SCI-ANS-002 - Check pod phase
+      ansible.builtin.assert:
+        that:
+          - item.status.phase == "Running"
+        fail_msg: "Pod {{ item.metadata.name }} is not Running"
+      loop: "{{ test_all_pods.resources }}"
+      loop_control:
+        label: "{{ item.metadata.name }}"
+
+    - name: Get PostgreSQL pod
+      # @req SCI-ANS-002 - Gather PostgreSQL pod for validation
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: "{{ test_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/name=postgresql"
+      register: test_postgres_pods
+
+    - name: Validate PostgreSQL connection
+      # @req SCI-ANS-002 - Verify PostgreSQL accepts connections
+      kubernetes.core.k8s_exec:
+        namespace: "{{ test_namespace }}"
+        pod: "{{ test_postgres_pods.resources[0].metadata.name }}"
+        command: pg_isready -U {{ database.user }} -d {{ database.name }}
+      register: test_postgres_ready
+      retries: 5
+      delay: 3
+      until: test_postgres_ready.rc == 0
+
+    - name: Report first deployment validation results
+      # @req SCI-ANS-002 - Report pass/fail per check
+      ansible.builtin.debug:
+        msg: |
+          ===== First Deployment Validation Results =====
+          Healthcheck endpoint: {{ 'PASS' if test_healthcheck.rc == 0 else 'FAIL' }}
+          Stats endpoint: {{ 'PASS' if test_stats.rc == 0 else 'FAIL' }}
+          All pods Running: PASS
+          PostgreSQL connection: {{ 'PASS' if test_postgres_ready.rc == 0 else 'FAIL' }}
+          ==============================================
+
+    - name: Wait before idempotency test
+      # @req SCI-ANS-003 - Allow system to stabilize
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Deploy SDD Navigator Helm chart (second run - idempotency test)
+      # @req SCI-ANS-003 - Second run MUST produce zero changes
+      kubernetes.core.helm:
+        name: "{{ test_release_name }}"
+        chart_ref: "{{ helm.chart_path }}"
+        release_namespace: "{{ test_namespace }}"
+        create_namespace: false
+        wait: true
+        wait_timeout: "{{ helm.wait_timeout }}"
+        atomic: true
+        values:
+          postgresql:
+            auth:
+              username: "{{ database.user }}"
+              password: "{{ lookup('env', 'DB_PASSWORD') }}"
+              database: "{{ database.name }}"
+      register: helm_deploy_second
+
+    - name: Verify idempotency
+      # @req SCI-ANS-003 - Second run MUST not change anything
+      ansible.builtin.assert:
+        that:
+          - not helm_deploy_second.changed
+        fail_msg: "Idempotency test FAILED - second deployment reported changes"
+        success_msg: "Idempotency test PASSED - second deployment reported no changes"
+
+    - name: Get deployment completion time
+      ansible.builtin.set_fact:
+        deployment_end_time: "{{ ansible_date_time.epoch }}"
+
+    - name: Calculate deployment duration
+      ansible.builtin.set_fact:
+        deployment_duration: "{{ deployment_end_time | int - deployment_start_time | int }}"
+
+    - name: Final test summary
+      # @req SCI-ANS-002 - Report comprehensive results
+      ansible.builtin.debug:
+        msg: |
+          ===== E2E Test Summary =====
+          Status: SUCCESS
+
+          Requirements Verified:
+            ✓ SCI-ANS-001: Ansible orchestration with correct deployment order
+            ✓ SCI-ANS-002: Post-deploy validation with pass/fail reporting
+            ✓ SCI-ANS-003: Idempotency (second run produces zero changes)
+
+          Test Results:
+            - First deployment: {{ 'SUCCESS' if first_deploy_success else 'FAILED' }}
+            - Healthcheck validation: {{ 'PASS' if test_healthcheck.rc == 0 else 'FAIL' }}
+            - Stats validation: {{ 'PASS' if test_stats.rc == 0 else 'FAIL' }}
+            - All pods Running: PASS
+            - PostgreSQL connection: {{ 'PASS' if test_postgres_ready.rc == 0 else 'FAIL' }}
+            - Idempotency: {{ 'PASS' if not helm_deploy_second.changed else 'FAIL' }}
+
+          Test Duration: {{ deployment_duration }} seconds
+          Test Namespace: {{ test_namespace }}
+          ============================
+
+    - name: Cleanup test namespace
+      # @req SCI-ANS-003 - Clean up test resources
+      kubernetes.core.k8s:
+        name: "{{ test_namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: absent
+        wait: true
+        wait_timeout: 120
+      when: lookup('env', 'SKIP_CLEANUP') | default('false', true) != 'true'

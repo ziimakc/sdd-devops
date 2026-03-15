@@ -1,0 +1,225 @@
+# @req SCI-ANS-001
+# @req SCI-ANS-002
+# @req SCI-ANS-003
+# @req SCI-CI-001
+name: E2E Deployment Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      cleanup:
+        description: 'Cleanup test namespace after test'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  e2e-test:
+    name: End-to-End Deployment Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ansible and dependencies
+        # @req SCI-ANS-001 - Install required tools for orchestration
+        run: |
+          pip install ansible-core>=2.14 ansible-lint
+          pip install kubernetes
+
+      - name: Install Ansible collections
+        # @req SCI-ANS-001 - Install kubernetes.core collection
+        run: |
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Set up Helm
+        # @req SCI-ANS-001 - Helm required for chart deployment
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.14.0"
+
+      - name: Set up kubectl
+        # @req SCI-ANS-001 - kubectl required for K8s access
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.29.0"
+
+      - name: Create kind cluster
+        # @req SCI-ANS-001 - Create test Kubernetes cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: sdd-navigator-test
+          wait: 120s
+          kubectl_version: v1.29.0
+
+      - name: Verify cluster access
+        # @req SCI-ANS-001 - Ensure kubectl can communicate with cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Build Helm chart dependencies
+        # @req SCI-ANS-001 - Prepare Helm chart for deployment
+        run: |
+          helm dependency update charts/sdd-navigator
+
+      - name: Run E2E deployment test (bash script)
+        # @req SCI-ANS-001 - Execute comprehensive E2E test
+        # @req SCI-ANS-002 - Verify post-deploy validation
+        # @req SCI-ANS-003 - Verify idempotency
+        env:
+          DB_PASSWORD: test-e2e-password-${{ github.run_id }}
+          CLEANUP_ON_EXIT: ${{ github.event.inputs.cleanup || 'true' }}
+        run: |
+          chmod +x scripts/test-e2e-deployment.sh
+          ./scripts/test-e2e-deployment.sh
+
+      - name: Upload test artifacts on failure
+        # @req SCI-ANS-002 - Preserve test logs for debugging
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-logs
+          path: temp/e2e-test/
+          retention-days: 7
+
+      - name: Display cluster state on failure
+        # @req SCI-ANS-002 - Show cluster state for debugging
+        if: failure()
+        run: |
+          echo "===== Namespace Status ====="
+          kubectl get namespace sdd-navigator -o yaml || true
+          echo ""
+          echo "===== Pods Status ====="
+          kubectl -n sdd-navigator get pods -o wide || true
+          echo ""
+          echo "===== Pod Descriptions ====="
+          kubectl -n sdd-navigator describe pods || true
+          echo ""
+          echo "===== Events ====="
+          kubectl -n sdd-navigator get events --sort-by='.lastTimestamp' || true
+          echo ""
+          echo "===== API Pod Logs ====="
+          kubectl -n sdd-navigator logs -l app.kubernetes.io/component=api --tail=100 || true
+          echo ""
+          echo "===== PostgreSQL Pod Logs ====="
+          kubectl -n sdd-navigator logs -l app.kubernetes.io/name=postgresql --tail=100 || true
+
+  e2e-test-ansible-playbook:
+    name: E2E Test (Ansible Playbook)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ansible and dependencies
+        # @req SCI-ANS-001 - Install required tools
+        run: |
+          pip install ansible-core>=2.14
+          pip install kubernetes
+
+      - name: Install Ansible collections
+        # @req SCI-ANS-001 - Install kubernetes.core collection
+        run: |
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.14.0"
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: "v1.29.0"
+
+      - name: Create kind cluster
+        # @req SCI-ANS-001 - Create test Kubernetes cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: sdd-navigator-e2e-test
+          wait: 120s
+          kubectl_version: v1.29.0
+
+      - name: Verify cluster access
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Build Helm chart dependencies
+        run: |
+          helm dependency update charts/sdd-navigator
+
+      - name: Run Ansible E2E test playbook
+        # @req SCI-ANS-001 - Execute E2E test via Ansible playbook
+        # @req SCI-ANS-002 - Verify post-deploy validation
+        # @req SCI-ANS-003 - Verify idempotency
+        env:
+          DB_PASSWORD: test-e2e-ansible-${{ github.run_id }}
+        run: |
+          ansible-playbook \
+            -i ansible/inventory/local.yml \
+            ansible/test-e2e.yml \
+            -v
+
+      - name: Display test results on failure
+        if: failure()
+        run: |
+          echo "===== E2E Test Failed ====="
+          kubectl -n sdd-navigator-e2e-test get all || true
+
+  summary:
+    name: E2E Test Summary
+    runs-on: ubuntu-latest
+    needs: [e2e-test, e2e-test-ansible-playbook]
+    if: always()
+
+    steps:
+      - name: Check test results
+        # @req SCI-ANS-002 - Report comprehensive test results
+        run: |
+          echo "===== E2E Test Suite Summary ====="
+          echo ""
+          echo "Bash Script Test: ${{ needs.e2e-test.result }}"
+          echo "Ansible Playbook Test: ${{ needs.e2e-test-ansible-playbook.result }}"
+          echo ""
+
+          if [[ "${{ needs.e2e-test.result }}" != "success" ]] || \
+             [[ "${{ needs.e2e-test-ansible-playbook.result }}" != "success" ]]; then
+            echo "❌ E2E Test Suite FAILED"
+            echo ""
+            echo "Requirements Verification:"
+            echo "  SCI-ANS-001 (Orchestration): FAILED"
+            echo "  SCI-ANS-002 (Validation): FAILED"
+            echo "  SCI-ANS-003 (Idempotency): FAILED"
+            exit 1
+          else
+            echo "✅ E2E Test Suite PASSED"
+            echo ""
+            echo "Requirements Verification:"
+            echo "  ✓ SCI-ANS-001: Ansible orchestration with correct deployment order"
+            echo "  ✓ SCI-ANS-002: Post-deploy validation with pass/fail reporting"
+            echo "  ✓ SCI-ANS-003: Idempotency (second run produces zero changes)"
+            exit 0
+          fi

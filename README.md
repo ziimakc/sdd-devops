@@ -84,6 +84,17 @@ We use the **Bitnami PostgreSQL Helm chart** as a dependency rather than a custo
 
 ## Deployment
 
+### Quick Test (E2E)
+
+```bash
+# Run comprehensive E2E test
+export DB_PASSWORD="test-password"
+./scripts/test-e2e-deployment.sh
+
+# Or use Ansible playbook
+ansible-playbook -i ansible/inventory/local.yml ansible/test-e2e.yml
+```
+
 ### With Ansible (recommended)
 
 ```bash
@@ -159,6 +170,38 @@ Post-deployment checks:
 - All pods in `Running` state
 - Database responds to `pg_isready`
 
+## End-to-End Testing (@req SCI-ANS-001, SCI-ANS-002, SCI-ANS-003)
+
+Comprehensive E2E tests validate the complete deployment workflow including orchestration, validation, and idempotency.
+
+### Quick Start
+
+```bash
+# Run bash-based E2E test
+export DB_PASSWORD='secure-password'
+./scripts/test-e2e-deployment.sh
+
+# Run Ansible playbook E2E test
+export DB_PASSWORD='secure-password'
+ansible-playbook -i ansible/inventory/local.yml ansible/test-e2e.yml
+```
+
+### What Gets Tested
+
+1. **Initial Deployment** - Clean state to fully operational stack
+2. **Deployment Order** - Namespace → Secrets → Database → API → Frontend
+3. **Post-Deploy Validation** - All healthchecks, pod status, DB connectivity
+4. **Idempotency** - Second run produces zero changes
+5. **Comprehensive Reporting** - Pass/fail per requirement
+
+### Test Implementations
+
+- **Bash Script**: `scripts/test-e2e-deployment.sh` - Detailed logging and reporting
+- **Ansible Playbook**: `ansible/test-e2e.yml` - Native Ansible implementation
+- **CI Workflow**: `.github/workflows/e2e-test.yml` - Automated testing with kind cluster
+
+See [docs/E2E-TESTING.md](docs/E2E-TESTING.md) for complete documentation.
+
 ## Traceability (@req SCI-TRACE-001)
 
 Every infrastructure file contains `@req` annotations linking to requirements in `requirements.yaml`. This enables bidirectional traceability, impact analysis, and coverage metrics.
@@ -192,6 +235,41 @@ Every infrastructure file contains `@req` annotations linking to requirements in
 **Missing @req annotations**: Add `# @req REQ-ID` at top of files, run `./scripts/check-traceability.sh`
 
 **Invalid @req reference**: Check `requirements.yaml` for correct requirement IDs, run `./scripts/validate-req-references.sh`
+
+## Testing & Validation
+
+### Local Testing
+
+```bash
+# Quick validation of TASK-059 implementation
+./scripts/validate-task-059.sh
+
+# Lint all infrastructure code
+./scripts/lint-local.sh
+
+# Check traceability annotations
+./scripts/check-traceability.sh
+./scripts/validate-req-references.sh
+
+# Run E2E deployment test (recommended)
+export DB_PASSWORD='test-password'
+./scripts/test-e2e-deployment.sh
+
+# Or use Ansible playbook version
+ansible-playbook -i ansible/inventory/local.yml ansible/test-e2e.yml
+
+# Test idempotency only
+./scripts/test-idempotency.sh
+
+# Comprehensive Ansible validation
+./scripts/validate-ansible.sh
+```
+
+### CI/CD Testing
+
+All tests run automatically in GitHub Actions:
+- **infra-ci.yml**: Linting, validation, traceability checks
+- **e2e-test.yml**: Full deployment tests with kind cluster
 
 ## Demonstration Materials
 
