@@ -462,24 +462,24 @@ tasks:
     status: done
     assignee: ziimakc
     createdAt: "2026-03-15T13:20:32Z"
-    updatedAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T16:05:00Z"
 
   - id: TASK-057
     requirementId: SCI-HELM-002
     title: Document PostgreSQL deployment choice in README.md
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-15T13:20:32Z"
-    updatedAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T16:10:00Z"
 
   # Testing and Validation
   - id: TASK-058
     requirementId: SCI-CI-001
     title: Test full CI pipeline on main branch
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-15T13:20:32Z"
-    updatedAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T16:15:00Z"
 
   - id: TASK-059
     requirementId: SCI-ANS-001
