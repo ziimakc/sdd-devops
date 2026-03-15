@@ -4,8 +4,14 @@ This directory contains documentation for the SDD Navigator infrastructure deplo
 
 ## Contents
 
+### Getting Started
+- **[REVIEWER_TUTORIAL.md](REVIEWER_TUTORIAL.md)** - 5-minute hands-on tutorial (START HERE)
+- **[DEMO_QUICKSTART.md](DEMO_QUICKSTART.md)** - 2-minute quick reference guide
+- **[DEMO_SUMMARY.md](DEMO_SUMMARY.md)** - Executive summary for reviewers
+
 ### CI Validation Demonstration
 - **[DEMO_CI_VALIDATION.md](DEMO_CI_VALIDATION.md)** - Comprehensive guide to demonstration branches showcasing CI pipeline violation detection
+- **[BRANCH_COMPARISON.md](BRANCH_COMPARISON.md)** - Visual comparison of all violation branches
 
 ### Demonstration Materials
 
@@ -58,9 +64,10 @@ See `../requirements.yaml` for the complete list of functional and architectural
 
 ### Related Scripts
 
+- `scripts/run-demo.sh` - Run automated demonstration of all violations
+- `scripts/verify-demo.sh` - Verify demonstration setup is complete
 - `scripts/check-traceability.sh` - Scan for missing @req annotations
 - `scripts/validate-req-references.sh` - Validate @req references exist
-- `scripts/run-demo.sh` - Run automated demonstration
 - `scripts/lint-local.sh` - Run all linters locally
 - `scripts/deploy.sh` - Deploy to Kubernetes cluster
 
@@ -78,4 +85,22 @@ All checks must pass before code can be merged to main branch.
 
 ---
 
+## Quick Demo Commands
+
+```bash
+# Verify demonstration setup (27 checks)
+./scripts/verify-demo.sh
+
+# Run automated demonstration (5 violations)
+./scripts/run-demo.sh
+
+# Manual testing
+git checkout demo/violation-missing-req
+./scripts/check-traceability.sh
+git checkout main
+```
+
+---
+
 **Last Updated**: 2026-03-15
+**Tasks Completed**: TASK-051, TASK-052, TASK-053, TASK-054, TASK-055
