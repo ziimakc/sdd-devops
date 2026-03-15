@@ -492,7 +492,7 @@ tasks:
   - id: TASK-060
     requirementId: SCI-ANS-002
     title: Verify all post-deploy validation checks pass
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-15T13:20:32Z"
-    updatedAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T16:50:32Z"
