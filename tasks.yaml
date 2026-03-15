@@ -386,34 +386,34 @@ tasks:
   - id: TASK-047
     requirementId: SCI-TRACE-001
     title: Add @req annotations to all Helm template files
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:48:35Z"
 
   - id: TASK-048
     requirementId: SCI-TRACE-001
     title: Add @req annotations to all Ansible task files
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:48:35Z"
 
   - id: TASK-049
     requirementId: SCI-TRACE-001
     title: Add @req annotations to all CI job definitions
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:48:35Z"
 
   - id: TASK-050
     requirementId: SCI-TRACE-001
     title: Validate all @req annotations reference existing requirements
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:48:35Z"
 
   # Step 5: Demonstration and Documentation
   - id: TASK-051

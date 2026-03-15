@@ -142,6 +142,30 @@ Post-deployment checks:
 - All pods in `Running` state
 - Database responds to `pg_isready`
 
+## Traceability (@req SCI-TRACE-001)
+
+Every infrastructure file contains `@req` annotations linking to requirements in `requirements.yaml`. This enables bidirectional traceability, impact analysis, and coverage metrics.
+
+### Validation Scripts
+
+**Check for missing annotations:**
+
+```bash
+./scripts/check-traceability.sh
+```
+
+**Validate references are valid:**
+
+```bash
+./scripts/validate-req-references.sh
+```
+
+**Generate coverage report:**
+
+```bash
+./scripts/traceability-report.sh
+```
+
 ## Troubleshooting
 
 **"PLACEHOLDER_MUST_OVERRIDE" error**: Set `DB_PASSWORD` environment variable or use `--set postgresql.auth.password=...`
@@ -149,3 +173,5 @@ Post-deployment checks:
 **API healthcheck fails**: Check `kubectl logs -n sdd-navigator deployment/sdd-navigator-api` for database connection issues
 
 **Missing @req annotations**: Add `# @req REQ-ID` at top of files, run `./scripts/check-traceability.sh`
+
+**Invalid @req reference**: Check `requirements.yaml` for correct requirement IDs, run `./scripts/validate-req-references.sh`
