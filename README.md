@@ -31,26 +31,6 @@ This repository implements the DevOps layer for the SDD (Software-Defined Develo
     └── infra-ci.yml               # Lint, validate, dry-run (@req SCI-CI-001, SCI-CI-002)
 ```
 
-## Requirements Traceability
-
-Every artifact references requirements from `requirements.yaml`:
-
-| Requirement | Description | Implementation |
-|-------------|-------------|----------------|
-| `SCI-HELM-001` | API deployment with probes | `charts/sdd-navigator/charts/api/` |
-| `SCI-HELM-002` | PostgreSQL StatefulSet/PVC | `charts/sdd-navigator/values.yaml` |
-| `SCI-HELM-003` | Frontend nginx deployment | `charts/sdd-navigator/charts/frontend/` |
-| `SCI-HELM-004` | Ingress routing | `charts/sdd-navigator/templates/ingress.yaml` |
-| `SCI-HELM-005` | Secrets/ConfigMaps | `*/templates/{secret,configmap}.yaml` |
-| `SCI-HELM-006` | DRY via values.yaml | All `values.yaml` + `_helpers.tpl` |
-| `SCI-ANS-001` | Ansible orchestration | `ansible/roles/deploy/tasks/main.yml` |
-| `SCI-ANS-002` | Post-deploy validation | `ansible/roles/validate/tasks/main.yml` |
-| `SCI-ANS-003` | Idempotent playbooks | All Ansible tasks use `state: present` |
-| `SCI-CI-001` | Lint pipeline | `.github/workflows/infra-ci.yml` |
-| `SCI-CI-002` | Manifest validation | CI job `validate-manifests` |
-| `SCI-TRACE-001` | @req annotations | `scripts/check-traceability.sh` |
-| `SCI-SEC-001` | Security baseline | `securityContext` in all deployments |
-
 ## Prerequisites
 
 - Kubernetes cluster (v1.28+)
@@ -106,7 +86,7 @@ All configurable values reside in `charts/sdd-navigator/values.yaml`:
 ```yaml
 api:
   image:
-    tag: "0.1.0"          # Single source for API version
+    tag: "0.1.0" # Single source for API version
   replicaCount: 2
   port: 8080
   resources:
@@ -115,7 +95,7 @@ api:
       cpu: "500m"
 
 database:
-  password: "PLACEHOLDER_MUST_OVERRIDE"  # Fails visibly if not set
+  password: "PLACEHOLDER_MUST_OVERRIDE" # Fails visibly if not set
 ```
 
 Override via Helm:
@@ -155,17 +135,25 @@ kind: Deployment
 ```bash
 # Lint Helm charts
 helm lint charts/sdd-navigator
+```
 
+```bash
 # Render templates (catch template errors)
 helm template sdd-navigator charts/sdd-navigator \
   --set database.password=test
+```
 
+```bash
 # Check traceability
 ./scripts/check-traceability.sh
+```
 
+```bash
 # Lint Ansible
 ansible-lint ansible/playbook.yml
+```
 
+```bash
 # Validate YAML syntax
 yamllint .
 ```
@@ -180,6 +168,7 @@ On push, GitHub Actions runs:
 4. **Dry-run deployment**: Helm install with `--dry-run`
 
 Pipeline fails if:
+
 - Any linter reports errors
 - Rendered manifests violate Kubernetes schemas
 - Files missing `@req` annotations
@@ -207,6 +196,7 @@ ansible-playbook -i ansible/inventory/local.yml ansible/playbook.yml
 ```
 
 Achieved via:
+
 - `kubernetes.core.k8s` with `state: present`
 - `kubernetes.core.helm` detects existing releases
 - ConfigMaps/Secrets use declarative state
@@ -215,12 +205,12 @@ Achieved via:
 
 Post-deployment, Ansible verifies:
 
-| Check | Validation |
-|-------|------------|
-| API health | `/healthcheck` returns HTTP 200 |
-| API stats | `/stats` returns HTTP 200 |
-| Pods running | All pods in `Running` state |
-| Database ready | `pg_isready` succeeds |
+| Check          | Validation                      |
+| -------------- | ------------------------------- |
+| API health     | `/healthcheck` returns HTTP 200 |
+| API stats      | `/stats` returns HTTP 200       |
+| Pods running   | All pods in `Running` state     |
+| Database ready | `pg_isready` succeeds           |
 
 Failures cause playbook to exit with error.
 
@@ -240,11 +230,13 @@ ansible-playbook ...
 ### Validation Fails: API Healthcheck Timeout
 
 **Check pod logs**:
+
 ```bash
 kubectl logs -n sdd-navigator deployment/sdd-navigator-api
 ```
 
 **Common causes**:
+
 - Database connection failed (check credentials)
 - API port mismatch (verify ConfigMap)
 - Resource limits too low (increase in values.yaml)
@@ -260,23 +252,3 @@ kubectl logs -n sdd-navigator deployment/sdd-navigator-api
 apiVersion: apps/v1
 ...
 ```
-
-## Parsimony-Driven Development (PDD)
-
-This project follows PDD principles:
-
-1. **Justify existence**: Every line has a purpose - removing it loses meaning
-2. **No redundancy**: Comments explain *why*, not *what* (code is self-documenting)
-3. **DRY enforcement**: Values defined once, referenced everywhere
-4. **Deterministic checks**: Linters/validators run in CI, not manual review
-
-## Contributing
-
-1. Read `requirements.yaml` - understand *what* you're implementing
-2. Add `# @req REQ-ID` annotations
-3. Run local validation (`helm lint`, `./scripts/check-traceability.sh`)
-4. Ensure CI passes before merging
-
-## License
-
-MIT
