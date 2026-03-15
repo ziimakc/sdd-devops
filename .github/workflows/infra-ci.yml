@@ -110,5 +110,3 @@ jobs:
 
       - name: Run traceability check
         run: ./scripts/check-traceability.sh
-
-
