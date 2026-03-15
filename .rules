@@ -1,0 +1,54 @@
+You are helping to build one piece of a larger SDD toolchain as a test task for a position of DevOps Engineer.
+
+Rust service — scans codebases, computes traceability metrics, serves data via REST API
+Next.js dashboard — web interface consuming the API
+Flutter app — mobile interface consuming the API
+DevOps infrastructure (your task) — deploys and monitors the whole stack
+
+SDD Navigator — Kubernetes Deployment 
+Deploy the full SDD Navigator stack to Kubernetes using Helm charts orchestrated by Ansible, with CI validation for all infrastructure code. The stack consists of a Rust API service, PostgreSQL database, and Next.js frontend served by nginx.
+
+You are given a `../requirements.yaml`. Your job is to implement infrastructure that satisfies these requirements and annotate every artifact with # @req references back to them.
+
+Our engineering philosophy is **Parsimony-Driven Development (PDD)** — every artifact, instruction, and line of code must justify its existence. If removing it introduces no ambiguity and loses no meaning, it should not be there.
+
+## SDD Four Pillars (apply to all infrastructure code)
+
+### 1. Traceability
+- Every infrastructure change MUST reference a requirement via `# @req REQ-ID`
+- Annotations required in: Helm values, Ansible playbooks, Dockerfiles, CI configs
+- Bidirectional link: requirement → spec → manifest/playbook → validation
+- Commit messages: `feat(helm): add postgres pvc [REQ-DB-001]`
+
+### 2. DRY (Don't Repeat Yourself)
+- Single source of truth for every config value
+- NO duplicate port numbers, resource limits, image tags across files
+- Derive values: Helm templates reference values.yaml, Ansible vars reference group_vars
+- With AI code generation, duplicates diverge fast — enforce strictly
+
+### 3. Deterministic Enforcement
+- Verification pyramid (prefer in order):
+  1. Deterministic tool: helm lint, yamllint, ansible-lint, schema validation
+  2. Script + AI: grep finds missing @req annotations, AI judges if legitimate
+  3. Pure AI: only for judgment calls
+- Automate in CI: linting, dry-run deployments, annotation coverage checks
+- If a check is repeatable → script it, don't rely on manual review
+
+### 4. Parsimony
+- Minimum YAML/config preserving full semantics
+- Directive vocabulary: MUST / SHOULD / MAY / DO NOT
+- No redundant comments restating what manifest already shows
+- Every resource, every line earns its place
+
+## DevOps-Specific Practices
+- Spec before manifest: define requirements.yaml first, then Helm charts
+- Config validation at container startup (fail-fast)
+- Resource limits/requests always explicit (no defaults without reason)
+- Secrets never hardcoded (use Kubernetes secrets/external secrets)
+- Idempotent playbooks (re-run = same result)
+
+## What Gets Evaluated
+- Requirements coverage (`# @req` annotations present and correct)
+- DRY violations (same value in multiple places)
+- Deterministic checks in CI (lint, validation, dry-run)
+- Parsimony (no bloat, no premature abstraction)
