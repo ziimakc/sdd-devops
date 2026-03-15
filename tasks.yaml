@@ -313,74 +313,74 @@ tasks:
   - id: TASK-038
     requirementId: SCI-CI-001
     title: Create GitHub Actions workflow infra-ci.yml
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-039
     requirementId: SCI-CI-001
     title: Add helm-lint job to CI workflow
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-040
     requirementId: SCI-CI-002
     title: Add helm-validate job with kubeconform validation
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-041
     requirementId: SCI-CI-001
     title: Add ansible-lint job to CI workflow
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-042
     requirementId: SCI-CI-001
     title: Add yamllint job to CI workflow
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-043
     requirementId: SCI-TRACE-001
     title: Create scripts/check-traceability.sh for @req validation
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-044
     requirementId: SCI-TRACE-001
     title: Add traceability check job to CI workflow
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-045
     requirementId: SCI-CI-001
     title: Add CI summary job for consolidated pass/fail report
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   - id: TASK-046
     requirementId: SCI-CI-001
     title: Configure parallel execution for independent CI jobs
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:41:57Z"
 
   # Step 4: Traceability
   - id: TASK-047

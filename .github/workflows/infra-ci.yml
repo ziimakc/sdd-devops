@@ -110,3 +110,32 @@ jobs:
 
       - name: Run traceability check
         run: ./scripts/check-traceability.sh
+
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [lint-yaml, lint-ansible, lint-helm, validate-manifests, check-traceability]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          echo "=== CI Pipeline Summary ==="
+          echo ""
+          echo "YAML Lint: ${{ needs.lint-yaml.result }}"
+          echo "Ansible Lint: ${{ needs.lint-ansible.result }}"
+          echo "Helm Lint: ${{ needs.lint-helm.result }}"
+          echo "Manifest Validation: ${{ needs.validate-manifests.result }}"
+          echo "Traceability Check: ${{ needs.check-traceability.result }}"
+          echo ""
+
+          if [[ "${{ needs.lint-yaml.result }}" != "success" ]] || \
+             [[ "${{ needs.lint-ansible.result }}" != "success" ]] || \
+             [[ "${{ needs.lint-helm.result }}" != "success" ]] || \
+             [[ "${{ needs.validate-manifests.result }}" != "success" ]] || \
+             [[ "${{ needs.check-traceability.result }}" != "success" ]]; then
+            echo "❌ CI Pipeline FAILED"
+            exit 1
+          else
+            echo "✅ CI Pipeline PASSED"
+            exit 0
+          fi
