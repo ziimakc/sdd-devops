@@ -29,8 +29,6 @@ Our engineering philosophy is **Parsimony-Driven Development (PDD)** — every a
 ### 3. Deterministic Enforcement
 - Verification pyramid (prefer in order):
   1. Deterministic tool: helm lint, yamllint, ansible-lint, schema validation
-  2. Script + AI: grep finds missing @req annotations, AI judges if legitimate
-  3. Pure AI: only for judgment calls
 - Automate in CI: linting, dry-run deployments, annotation coverage checks
 - If a check is repeatable → script it, don't rely on manual review
 
@@ -38,10 +36,10 @@ Our engineering philosophy is **Parsimony-Driven Development (PDD)** — every a
 - Minimum YAML/config preserving full semantics
 - Directive vocabulary: MUST / SHOULD / MAY / DO NOT
 - No redundant comments restating what manifest already shows
+- No redundant bloated documentation, code should explain itself, docs give quick commands
 - Every resource, every line earns its place
 
 ## DevOps-Specific Practices
-- Spec before manifest: define requirements.yaml first, then Helm charts
 - Config validation at container startup (fail-fast)
 - Resource limits/requests always explicit (no defaults without reason)
 - Secrets never hardcoded (use Kubernetes secrets/external secrets)

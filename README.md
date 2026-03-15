@@ -1,99 +1,56 @@
 # SDD Navigator - Kubernetes Deployment Infrastructure
 
-Infrastructure as Code for deploying the SDD Navigator stack (Rust API, Next.js frontend, PostgreSQL) to Kubernetes using Helm and Ansible.
-
-## Overview
-
-This repository implements the DevOps layer for the SDD (Software-Defined Development) Navigator toolchain. It deploys a full observability stack consisting of:
-
-- **API Service**: Rust-based code analysis API (`sdd-coverage`)
-- **Frontend**: nginx serving Next.js static export
-- **Database**: PostgreSQL with persistent storage
+Deploy Rust API, Next.js frontend, and PostgreSQL to Kubernetes using Helm charts orchestrated by Ansible.
 
 ## Architecture
 
 ```
 ├── charts/sdd-navigator/          # Umbrella Helm chart
 │   ├── templates/
-│   │   ├── _helpers.tpl           # Shared labels/selectors (@req SCI-HELM-006)
-│   │   └── ingress.yaml           # Route /api/* → API, / → frontend (@req SCI-HELM-004)
+│   │   ├── _helpers.tpl           # @req SCI-HELM-006
+│   │   └── ingress.yaml           # @req SCI-HELM-004
 │   └── charts/
-│       ├── api/                   # API subchart (@req SCI-HELM-001)
-│       └── frontend/              # Frontend subchart (@req SCI-HELM-003)
+│       ├── api/                   # @req SCI-HELM-001
+│       ├── frontend/              # @req SCI-HELM-003
+│       └── postgresql/            # @req SCI-HELM-002 (Bitnami dependency)
 ├── ansible/
-│   ├── playbook.yml               # Orchestrates deployment (@req SCI-ANS-001)
+│   ├── playbook.yml               # @req SCI-ANS-001
 │   └── roles/
-│       ├── deploy/                # Deploys Helm chart
-│       └── validate/              # Post-deployment checks (@req SCI-ANS-002)
+│       ├── deploy/
+│       └── validate/              # @req SCI-ANS-002
 ├── scripts/
-│   └── check-traceability.sh      # Enforces @req annotations (@req SCI-TRACE-001)
+│   └── check-traceability.sh      # @req SCI-TRACE-001
 └── .github/workflows/
-    └── infra-ci.yml               # Lint, validate, dry-run (@req SCI-CI-001, SCI-CI-002)
+    └── infra-ci.yml               # @req SCI-CI-001, SCI-CI-002
 ```
 
-## PostgreSQL: Bitnami Chart vs Custom StatefulSet (@req SCI-HELM-002)
+## Scripts
 
-We use the **Bitnami PostgreSQL Helm chart** as a dependency rather than a custom StatefulSet.
-
-**Rationale:**
-
-1. **Battle-tested** - Thousands of production deployments, edge cases handled
-2. **Security maintenance** - Regular security patches and updates from Bitnami
-3. **Feature-complete** - Replication, backups, metrics exporters, init scripts included
-4. **Community support** - Extensive documentation and issue resolution
-5. **Reduced maintenance** - Chart updates handle Kubernetes API changes automatically
-6. **Industry standard** - Expected and recognized by engineering teams
-
-**Trade-offs:**
-
-- Adds ~100 configuration options vs ~50 lines of custom YAML
-- External dependency on Bitnami chart repository
-- More abstraction layers between values and K8s resources
-
-**When custom StatefulSet makes sense:**
-
-- Learning exercises or minimal deployments
-- Air-gapped environments without external chart access
-- Extreme parsimony requirements (embedded/edge computing)
-
-**Decision:** Production-readiness outweighs parsimony for this infrastructure.
+- `check-traceability.sh` - Verify `@req` annotation coverage
+- `validate-req-references.sh` - Check @req IDs exist in requirements.yaml
+- `lint-local.sh` - Run all linters locally (yamllint, ansible-lint, helm lint)
+- `validate-ansible.sh` - Ansible playbook syntax check
+- `deploy.sh` - Deploy wrapper script
+- `test-idempotency.sh` - Verify Ansible idempotency
+- `test-traceability.sh` - Full traceability test suite
 
 ## Prerequisites
 
-- Kubernetes cluster (v1.28+)
+- Kubernetes v1.28+
 - Helm 3.14+
 - Ansible 2.15+ with `kubernetes.core` collection
-- kubectl configured with cluster access
+- kubectl configured
 
 ## Deployment
-
-### With Ansible (recommended)
 
 ```bash
 export DB_PASSWORD="your-secure-password"
 ansible-playbook -i ansible/inventory/local.yml ansible/playbook.yml
 ```
 
-### With Helm directly
-
-```bash
-kubectl create namespace sdd-navigator
-helm install sdd-navigator charts/sdd-navigator \
-  --namespace sdd-navigator \
-  --set postgresql.auth.password="${DB_PASSWORD}"
-```
-
-### Verify
-
-```bash
-kubectl get pods -n sdd-navigator
-kubectl port-forward -n sdd-navigator svc/sdd-navigator-api 8080:8080
-curl http://localhost:8080/healthcheck
-```
-
 ## Configuration (@req SCI-HELM-006)
 
-All values centralized in `charts/sdd-navigator/values.yaml` (DRY principle):
+Single source of truth: `charts/sdd-navigator/values.yaml`
 
 ```yaml
 api:
@@ -107,71 +64,34 @@ api:
 
 postgresql:
   auth:
-    password: "PLACEHOLDER_MUST_OVERRIDE" # MUST set via --set or env
-    username: sdd_user
-    database: sdd_navigator
-  primary:
-    persistence:
-      size: 10Gi
-  image:
-    tag: "15.4.0-debian-11-r45" # Explicit version (@req SCI-SEC-001)
+    password: "PLACEHOLDER_MUST_OVERRIDE" # MUST override via --set
 ```
 
-## CI/CD Pipeline (@req SCI-CI-001, SCI-CI-002)
-
-GitHub Actions validates on push:
+## CI/CD (@req SCI-CI-001, SCI-CI-002)
 
 1. Lint (yamllint, ansible-lint, helm lint)
-2. Manifest validation (kubeconform schema checks)
-3. Traceability check (`@req` annotation coverage)
+2. Schema validation (kubeconform)
+3. Traceability check (`@req` coverage)
 4. Dry-run deployment
+
+## Traceability (@req SCI-TRACE-001)
+
+Every file MUST contain `# @req REQ-ID` annotations:
+
+```bash
+./scripts/check-traceability.sh
+./scripts/validate-req-references.sh
+```
 
 ## Security (@req SCI-SEC-001)
 
-- All containers run as non-root
-- No `latest` tags - explicit versions only
-- Secrets in Kubernetes Secrets, never hardcoded
-- Placeholder password fails deployment if not overridden
+- Non-root containers
+- Explicit image versions (no `latest`)
+- Secrets via Kubernetes Secrets only
 
 ## Validation (@req SCI-ANS-002)
 
 Post-deployment checks:
-
-- API healthcheck (`/healthcheck` returns 200)
-- API stats endpoint (`/stats` returns 200)
-- All pods in `Running` state
-- Database responds to `pg_isready`
-
-## Traceability (@req SCI-TRACE-001)
-
-Every infrastructure file contains `@req` annotations linking to requirements in `requirements.yaml`. This enables bidirectional traceability, impact analysis, and coverage metrics.
-
-### Validation Scripts
-
-**Check for missing annotations:**
-
-```bash
-./scripts/check-traceability.sh
-```
-
-**Validate references are valid:**
-
-```bash
-./scripts/validate-req-references.sh
-```
-
-**Generate coverage report:**
-
-```bash
-./scripts/traceability-report.sh
-```
-
-## Troubleshooting
-
-**"PLACEHOLDER_MUST_OVERRIDE" error**: Set `DB_PASSWORD` environment variable or use `--set postgresql.auth.password=...`
-
-**API healthcheck fails**: Check `kubectl logs -n sdd-navigator deployment/sdd-navigator-api` for database connection issues
-
-**Missing @req annotations**: Add `# @req REQ-ID` at top of files, run `./scripts/check-traceability.sh`
-
-**Invalid @req reference**: Check `requirements.yaml` for correct requirement IDs, run `./scripts/validate-req-references.sh`
+- API `/healthcheck` returns 200
+- All pods `Running`
+- DB `pg_isready` succeeds
