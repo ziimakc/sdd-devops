@@ -468,10 +468,10 @@ tasks:
   - id: TASK-058
     requirementId: SCI-CI-001
     title: Test full CI pipeline on main branch
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-15T13:20:32Z"
-    updatedAt: "2026-03-15T13:20:32Z"
+    updatedAt: "2026-03-15T18:20:32Z"
 
   - id: TASK-059
     requirementId: SCI-ANS-001
