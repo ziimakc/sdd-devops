@@ -21,16 +21,7 @@ jobs:
         uses: ibiqlik/action-yamllint@v3
         with:
           file_or_dir: .
-          config_data: |
-            extends: default
-            rules:
-              line-length:
-                max: 120
-                level: warning
-              indentation:
-                spaces: 2
-              comments:
-                min-spaces-from-content: 1
+          config_file: .yamllint
 
   lint-ansible:
     name: Ansible Lint
@@ -46,6 +37,9 @@ jobs:
 
       - name: Install ansible-lint
         run: pip install ansible-lint ansible-core
+
+      - name: Install Ansible collections
+        run: ansible-galaxy collection install -r ansible/requirements.yml
 
       - name: Run ansible-lint
         run: ansible-lint ansible/playbook.yml
