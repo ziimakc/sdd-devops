@@ -459,7 +459,7 @@ tasks:
   - id: TASK-057
     requirementId: SCI-HELM-002
     title: Document PostgreSQL deployment choice in README.md
-    status: done
+    status: open
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
     updatedAt: "2026-03-01T09:00:00Z"

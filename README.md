@@ -67,6 +67,37 @@ postgresql:
     password: "PLACEHOLDER_MUST_OVERRIDE" # MUST override via --set
 ```
 
+## PostgreSQL Deployment (@req SCI-HELM-002)
+
+Bitnami PostgreSQL chart (v13.2.24) via Helm dependency.
+
+**Rationale:**
+- Production-grade StatefulSet with PVC persistence
+- Built-in health checks (`pg_isready`)
+- Security hardened (non-root user 1001, fsGroup 1001)
+- Configurable resources, backup, metrics
+- Active maintenance, CVE patching
+
+**Alternative considered:** Custom StatefulSet rejected — duplicates battle-tested implementation, increases maintenance burden.
+
+**Configuration:**
+```yaml
+postgresql:
+  auth:
+    password: "PLACEHOLDER_MUST_OVERRIDE" # MUST override via --set
+  primary:
+    persistence:
+      size: 10Gi
+  image:
+    tag: "15.4.0-debian-11-r45" # Explicit version per SCI-SEC-001
+```
+
+**Override password:**
+```bash
+helm install sdd-navigator ./charts/sdd-navigator \
+  --set postgresql.auth.password="$DB_PASSWORD"
+```
+
 ## CI/CD (@req SCI-CI-001, SCI-CI-002)
 
 1. Lint (yamllint, ansible-lint, helm lint)
