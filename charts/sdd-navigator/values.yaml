@@ -87,6 +87,7 @@ postgresql:
 ingress: # @req SCI-HELM-004
   enabled: true
   className: nginx
+  annotations: {}
   host: sdd-navigator.local
   tls:
     enabled: false

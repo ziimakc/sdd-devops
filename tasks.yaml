@@ -149,50 +149,50 @@ tasks:
   - id: TASK-018
     requirementId: SCI-HELM-004
     title: Create ingress.yaml routing /api/* to API service
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-019
     requirementId: SCI-HELM-004
     title: Configure ingress routing / to frontend service
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-020
     requirementId: SCI-HELM-004
     title: Add configurable TLS support to ingress
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-021
     requirementId: SCI-HELM-006
     title: Create umbrella chart Chart.yaml with subchart dependencies
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-022
     requirementId: SCI-HELM-006
     title: Create umbrella chart values.yaml with global configuration
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:25:00Z"
 
   - id: TASK-023
     requirementId: SCI-SEC-001
     title: Ensure all container images use explicit version tags
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:25:00Z"
 
   # Step 3: Ansible Orchestration
   - id: TASK-024
