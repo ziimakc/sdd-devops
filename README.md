@@ -31,51 +31,32 @@ This repository implements the DevOps layer for the SDD (Software-Defined Develo
     └── infra-ci.yml               # Lint, validate, dry-run (@req SCI-CI-001, SCI-CI-002)
 ```
 
-### PostgreSQL Implementation Choice (@req SCI-HELM-002)
+## PostgreSQL: Bitnami Chart vs Custom StatefulSet (@req SCI-HELM-002)
 
 We use the **Bitnami PostgreSQL Helm chart** as a dependency rather than a custom StatefulSet.
 
 **Rationale:**
 
-While `SCI-HELM-002` permits either approach ("Bitnami subchart or custom StatefulSet"), Bitnami is the **standard production choice** because:
-
-1. **Battle-tested** - Used by thousands of production deployments, edge cases already handled
-2. **Security maintenance** - Bitnami provides regular security patches and updates
-3. **Feature-complete** - Includes replication, backups, metrics exporters, init scripts out-of-box
-4. **Community support** - Extensive documentation, Stack Overflow answers, GitHub issues
-5. **Reduced maintenance burden** - Chart updates handle Kubernetes API changes automatically
-6. **Industry standard** - Teams expect and recognize Bitnami charts
+1. **Battle-tested** - Thousands of production deployments, edge cases handled
+2. **Security maintenance** - Regular security patches and updates from Bitnami
+3. **Feature-complete** - Replication, backups, metrics exporters, init scripts included
+4. **Community support** - Extensive documentation and issue resolution
+5. **Reduced maintenance** - Chart updates handle Kubernetes API changes automatically
+6. **Industry standard** - Expected and recognized by engineering teams
 
 **Trade-offs:**
 
-- **Complexity**: ~100 configuration options vs ~50 lines of custom YAML
-- **External dependency**: Requires Bitnami chart repository
-- **Less transparent**: More abstraction layers between values.yaml and Kubernetes resources
+- Adds ~100 configuration options vs ~50 lines of custom YAML
+- External dependency on Bitnami chart repository
+- More abstraction layers between values and K8s resources
 
 **When custom StatefulSet makes sense:**
 
 - Learning exercises or minimal deployments
-- Strict air-gapped environments without external chart access
-- Extreme parsimony requirements (embedded systems, edge computing)
+- Air-gapped environments without external chart access
+- Extreme parsimony requirements (embedded/edge computing)
 
-For this infrastructure, **production-readiness outweighs parsimony**, making Bitnami the pragmatic choice.
-
-Configuration in `values.yaml`:
-
-```yaml
-postgresql:
-  enabled: true
-  auth:
-    username: sdd_user
-    password: "PLACEHOLDER_MUST_OVERRIDE"
-    database: sdd_navigator
-  primary:
-    persistence:
-      enabled: true
-      size: 10Gi
-  image:
-    tag: "15.4.0-debian-11-r45" # Explicit version per SCI-SEC-001
-```
+**Decision:** Production-readiness outweighs parsimony for this infrastructure.
 
 ## Prerequisites
 
@@ -84,57 +65,41 @@ postgresql:
 - Ansible 2.15+ with `kubernetes.core` collection
 - kubectl configured with cluster access
 
-## Quick Start
+## Deployment
 
-### 1. Deploy with Ansible
+### With Ansible (recommended)
 
 ```bash
-# Set database password (required - no defaults per SCI-HELM-005)
 export DB_PASSWORD="your-secure-password"
-
-# Run deployment
 ansible-playbook -i ansible/inventory/local.yml ansible/playbook.yml
 ```
 
-### 2. Deploy with Helm Directly
+### With Helm directly
 
 ```bash
-# Create namespace
 kubectl create namespace sdd-navigator
-
-# Install chart
 helm install sdd-navigator charts/sdd-navigator \
   --namespace sdd-navigator \
   --set postgresql.auth.password="${DB_PASSWORD}"
 ```
 
-### 3. Verify Deployment
+### Verify
 
 ```bash
-# Check pod status
 kubectl get pods -n sdd-navigator
-
-# Test API healthcheck
 kubectl port-forward -n sdd-navigator svc/sdd-navigator-api 8080:8080
 curl http://localhost:8080/healthcheck
-
-# Access frontend
-kubectl port-forward -n sdd-navigator svc/sdd-navigator-frontend 8080:80
-open http://localhost:8080
 ```
 
-## Configuration
+## Configuration (@req SCI-HELM-006)
 
-### DRY Principle (@req SCI-HELM-006)
-
-All configurable values reside in `charts/sdd-navigator/values.yaml`:
+All values centralized in `charts/sdd-navigator/values.yaml` (DRY principle):
 
 ```yaml
 api:
   image:
-    tag: "0.1.0" # Single source for API version
+    tag: "0.1.0"
   replicaCount: 2
-  port: 8080
   resources:
     limits:
       memory: "512Mi"
@@ -142,163 +107,45 @@ api:
 
 postgresql:
   auth:
-    password: "PLACEHOLDER_MUST_OVERRIDE" # Fails visibly if not set
+    password: "PLACEHOLDER_MUST_OVERRIDE" # MUST set via --set or env
     username: sdd_user
     database: sdd_navigator
+  primary:
+    persistence:
+      size: 10Gi
+  image:
+    tag: "15.4.0-debian-11-r45" # Explicit version (@req SCI-SEC-001)
 ```
 
-Override via Helm:
+## CI/CD Pipeline (@req SCI-CI-001, SCI-CI-002)
 
-```bash
-helm install sdd-navigator charts/sdd-navigator \
-  --set api.replicaCount=3 \
-  --set postgresql.auth.password="${DB_PASSWORD}"
-```
+GitHub Actions validates on push:
 
-Override via Ansible (`ansible/group_vars/all.yml`):
-
-```yaml
-postgresql:
-  auth:
-    password: "{{ lookup('env', 'DB_PASSWORD') }}"
-```
-
-## Development Workflow
-
-### 1. Make Changes
-
-Edit Helm charts, Ansible playbooks, or CI config.
-
-### 2. Add Traceability Annotations
-
-Every file MUST have `# @req REQ-ID`:
-
-```yaml
-# @req SCI-HELM-001
-apiVersion: apps/v1
-kind: Deployment
-...
-```
-
-### 3. Validate Locally
-
-```bash
-# Lint Helm charts
-helm lint charts/sdd-navigator
-```
-
-```bash
-# Render templates (catch template errors)
-helm template sdd-navigator charts/sdd-navigator \
-  --set database.password=test
-```
-
-```bash
-# Check traceability
-./scripts/check-traceability.sh
-```
-
-```bash
-# Lint Ansible
-ansible-lint ansible/playbook.yml
-```
-
-```bash
-# Validate YAML syntax
-yamllint .
-```
-
-### 4. CI/CD Pipeline
-
-On push, GitHub Actions runs:
-
-1. **Parallel linting**: yamllint, ansible-lint, helm lint
-2. **Manifest validation**: Render + kubeconform schema checks
-3. **Traceability check**: Enforces `@req` annotations
-4. **Dry-run deployment**: Helm install with `--dry-run`
-
-Pipeline fails if:
-
-- Any linter reports errors
-- Rendered manifests violate Kubernetes schemas
-- Files missing `@req` annotations
-- Dry-run reveals template errors
+1. Lint (yamllint, ansible-lint, helm lint)
+2. Manifest validation (kubeconform schema checks)
+3. Traceability check (`@req` annotation coverage)
+4. Dry-run deployment
 
 ## Security (@req SCI-SEC-001)
 
-- All containers run as non-root (`runAsUser: 1000` / `101`)
+- All containers run as non-root
 - No `latest` tags - explicit versions only
-- Secrets stored in Kubernetes Secrets, not values.yaml
+- Secrets in Kubernetes Secrets, never hardcoded
 - Placeholder password fails deployment if not overridden
 
-## Idempotency (@req SCI-ANS-003)
+## Validation (@req SCI-ANS-002)
 
-Running `ansible-playbook` twice produces zero changes:
+Post-deployment checks:
 
-```bash
-# First run: creates resources
-ansible-playbook -i ansible/inventory/local.yml ansible/playbook.yml
-# PLAY RECAP: changed=5
-
-# Second run: no changes
-ansible-playbook -i ansible/inventory/local.yml ansible/playbook.yml
-# PLAY RECAP: changed=0
-```
-
-Achieved via:
-
-- `kubernetes.core.k8s` with `state: present`
-- `kubernetes.core.helm` detects existing releases
-- ConfigMaps/Secrets use declarative state
-
-## Validation Checks (@req SCI-ANS-002)
-
-Post-deployment, Ansible verifies:
-
-| Check          | Validation                      |
-| -------------- | ------------------------------- |
-| API health     | `/healthcheck` returns HTTP 200 |
-| API stats      | `/stats` returns HTTP 200       |
-| Pods running   | All pods in `Running` state     |
-| Database ready | `pg_isready` succeeds           |
-
-Failures cause playbook to exit with error.
+- API healthcheck (`/healthcheck` returns 200)
+- API stats endpoint (`/stats` returns 200)
+- All pods in `Running` state
+- Database responds to `pg_isready`
 
 ## Troubleshooting
 
-### Deployment Fails: "PLACEHOLDER_MUST_OVERRIDE"
+**"PLACEHOLDER_MUST_OVERRIDE" error**: Set `DB_PASSWORD` environment variable or use `--set postgresql.auth.password=...`
 
-**Cause**: Database password not set (intentional fail-fast per SCI-HELM-005)
+**API healthcheck fails**: Check `kubectl logs -n sdd-navigator deployment/sdd-navigator-api` for database connection issues
 
-**Fix**: Set password via environment variable or Helm values
-
-```bash
-export DB_PASSWORD="secure-password"
-ansible-playbook ...
-```
-
-### Validation Fails: API Healthcheck Timeout
-
-**Check pod logs**:
-
-```bash
-kubectl logs -n sdd-navigator deployment/sdd-navigator-api
-```
-
-**Common causes**:
-
-- Database connection failed (check credentials)
-- API port mismatch (verify ConfigMap)
-- Resource limits too low (increase in values.yaml)
-
-### Traceability Check Fails
-
-**Cause**: File missing `# @req` annotation
-
-**Fix**: Add annotation at top of file:
-
-```yaml
-# @req SCI-HELM-001
-apiVersion: apps/v1
-...
-```
+**Missing @req annotations**: Add `# @req REQ-ID` at top of files, run `./scripts/check-traceability.sh`
