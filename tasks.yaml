@@ -419,42 +419,42 @@ tasks:
   - id: TASK-051
     requirementId: SCI-TRACE-001
     title: Create demo/violation branch with missing @req annotation
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-052
     requirementId: SCI-HELM-006
     title: Create demo/violation with hardcoded port number
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-053
     requirementId: SCI-HELM-001
     title: Create demo/violation with missing liveness probe
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-054
     requirementId: SCI-HELM-005
     title: Create demo/violation with plaintext password in values.yaml
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-055
     requirementId: SCI-TRACE-001
     title: Create demo/violation with orphan @req reference
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T16:01:00Z"
 
   - id: TASK-056
     requirementId: SCI-TRACE-001
