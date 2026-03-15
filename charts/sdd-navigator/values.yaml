@@ -51,15 +51,38 @@ frontend:
     runAsNonRoot: true # @req SCI-SEC-001
     runAsUser: 101
 
-database: # @req SCI-HELM-002
-  name: sdd_navigator
-  user: sdd_user
-  password: "PLACEHOLDER_MUST_OVERRIDE" # @req SCI-HELM-005
-  port: 5432
-  persistence:
-    enabled: true
-    size: 10Gi
-    storageClass: ""
+# @req SCI-HELM-002
+# @req SCI-HELM-005
+# Bitnami PostgreSQL chart configuration
+postgresql:
+  enabled: true
+  auth:
+    username: sdd_user
+    password: "PLACEHOLDER_MUST_OVERRIDE" # @req SCI-HELM-005
+    database: sdd_navigator
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    podSecurityContext: # @req SCI-SEC-001
+      enabled: true
+      fsGroup: 1001
+    containerSecurityContext: # @req SCI-SEC-001
+      enabled: true
+      runAsUser: 1001
+      runAsNonRoot: true
+  image:
+    tag: "15.4.0-debian-11-r45" # @req SCI-SEC-001
+  metrics:
+    enabled: false
 
 ingress: # @req SCI-HELM-004
   enabled: true

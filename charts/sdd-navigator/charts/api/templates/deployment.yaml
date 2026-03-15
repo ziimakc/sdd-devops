@@ -1,5 +1,6 @@
 # @req SCI-HELM-001
 # @req SCI-HELM-006
+# @req SCI-SEC-001
 apiVersion: apps/v1
 kind: Deployment
 metadata:

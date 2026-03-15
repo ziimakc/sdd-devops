@@ -31,6 +31,52 @@ This repository implements the DevOps layer for the SDD (Software-Defined Develo
     └── infra-ci.yml               # Lint, validate, dry-run (@req SCI-CI-001, SCI-CI-002)
 ```
 
+### PostgreSQL Implementation Choice (@req SCI-HELM-002)
+
+We use the **Bitnami PostgreSQL Helm chart** as a dependency rather than a custom StatefulSet.
+
+**Rationale:**
+
+While `SCI-HELM-002` permits either approach ("Bitnami subchart or custom StatefulSet"), Bitnami is the **standard production choice** because:
+
+1. **Battle-tested** - Used by thousands of production deployments, edge cases already handled
+2. **Security maintenance** - Bitnami provides regular security patches and updates
+3. **Feature-complete** - Includes replication, backups, metrics exporters, init scripts out-of-box
+4. **Community support** - Extensive documentation, Stack Overflow answers, GitHub issues
+5. **Reduced maintenance burden** - Chart updates handle Kubernetes API changes automatically
+6. **Industry standard** - Teams expect and recognize Bitnami charts
+
+**Trade-offs:**
+
+- **Complexity**: ~100 configuration options vs ~50 lines of custom YAML
+- **External dependency**: Requires Bitnami chart repository
+- **Less transparent**: More abstraction layers between values.yaml and Kubernetes resources
+
+**When custom StatefulSet makes sense:**
+
+- Learning exercises or minimal deployments
+- Strict air-gapped environments without external chart access
+- Extreme parsimony requirements (embedded systems, edge computing)
+
+For this infrastructure, **production-readiness outweighs parsimony**, making Bitnami the pragmatic choice.
+
+Configuration in `values.yaml`:
+
+```yaml
+postgresql:
+  enabled: true
+  auth:
+    username: sdd_user
+    password: "PLACEHOLDER_MUST_OVERRIDE"
+    database: sdd_navigator
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+  image:
+    tag: "15.4.0-debian-11-r45" # Explicit version per SCI-SEC-001
+```
+
 ## Prerequisites
 
 - Kubernetes cluster (v1.28+)
@@ -59,7 +105,7 @@ kubectl create namespace sdd-navigator
 # Install chart
 helm install sdd-navigator charts/sdd-navigator \
   --namespace sdd-navigator \
-  --set database.password="${DB_PASSWORD}"
+  --set postgresql.auth.password="${DB_PASSWORD}"
 ```
 
 ### 3. Verify Deployment
@@ -94,8 +140,11 @@ api:
       memory: "512Mi"
       cpu: "500m"
 
-database:
-  password: "PLACEHOLDER_MUST_OVERRIDE" # Fails visibly if not set
+postgresql:
+  auth:
+    password: "PLACEHOLDER_MUST_OVERRIDE" # Fails visibly if not set
+    username: sdd_user
+    database: sdd_navigator
 ```
 
 Override via Helm:
@@ -103,14 +152,15 @@ Override via Helm:
 ```bash
 helm install sdd-navigator charts/sdd-navigator \
   --set api.replicaCount=3 \
-  --set database.password="${DB_PASSWORD}"
+  --set postgresql.auth.password="${DB_PASSWORD}"
 ```
 
 Override via Ansible (`ansible/group_vars/all.yml`):
 
 ```yaml
-database:
-  password: "{{ lookup('env', 'DB_PASSWORD') }}"
+postgresql:
+  auth:
+    password: "{{ lookup('env', 'DB_PASSWORD') }}"
 ```
 
 ## Development Workflow

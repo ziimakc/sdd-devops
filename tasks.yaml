@@ -30,116 +30,120 @@ tasks:
   - id: TASK-004
     requirementId: SCI-HELM-001
     title: Create API subchart deployment.yaml with health probes
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-005
     requirementId: SCI-HELM-001
     title: Create API subchart service.yaml with configurable port
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-006
     requirementId: SCI-HELM-005
     title: Create API ConfigMap for application configuration
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-007
     requirementId: SCI-HELM-005
     title: Create API Secret template for database credentials
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-008
     requirementId: SCI-HELM-006
     title: Create API subchart values.yaml with all configurable parameters
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:02:19Z"
 
   - id: TASK-009
     requirementId: SCI-SEC-001
     title: Configure API container to run as non-root user
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:02:19Z"
 
   # Step 2: Helm Charts - Frontend
   - id: TASK-010
     requirementId: SCI-HELM-003
     title: Create frontend subchart deployment.yaml for nginx
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:06:34Z"
 
   - id: TASK-011
     requirementId: SCI-HELM-003
     title: Create frontend subchart service.yaml
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:06:34Z"
 
   - id: TASK-012
     requirementId: SCI-HELM-006
     title: Create frontend subchart values.yaml with configurable parameters
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:06:34Z"
 
   - id: TASK-013
     requirementId: SCI-SEC-001
     title: Configure frontend container to run as non-root user
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:06:34Z"
 
   # Step 2: Helm Charts - PostgreSQL
   - id: TASK-014
     requirementId: SCI-HELM-002
     title: Add PostgreSQL deployment with PVC for persistence
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:06:34Z"
+    notes: "Implemented using Bitnami PostgreSQL chart v13.2.24 as dependency. Production-standard choice over custom StatefulSet."
 
   - id: TASK-015
     requirementId: SCI-HELM-002
     title: Configure PostgreSQL database name, user via values.yaml
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:06:34Z"
+    notes: "Configured via postgresql.auth.username, postgresql.auth.database in values.yaml"
 
   - id: TASK-016
     requirementId: SCI-HELM-005
     title: Store PostgreSQL credentials in Kubernetes Secret
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:06:34Z"
+    notes: "Bitnami chart auto-generates Secret with postgresql.auth.password. PLACEHOLDER_MUST_OVERRIDE ensures visible failure if not set."
 
   - id: TASK-017
     requirementId: SCI-SEC-001
     title: Configure PostgreSQL data volume with restrictive permissions
-    status: open
+    status: done
     assignee: ziimakc
     createdAt: "2026-03-01T09:00:00Z"
-    updatedAt: "2026-03-01T09:00:00Z"
+    updatedAt: "2026-03-15T15:06:34Z"
+    notes: "Security context: runAsUser 1001, fsGroup 1001, runAsNonRoot true. Bitnami handles security hardening."
 
   # Step 2: Helm Charts - Ingress
   - id: TASK-018

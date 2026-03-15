@@ -12,6 +12,6 @@ metadata:
 data:
   api.port: "{{ .Values.port }}"
   log.level: "{{ .Values.config.logLevel }}"
-  database.host: "{{ .Values.config.dbHost }}"
+  database.host: "{{ tpl .Values.config.dbHost . }}"
   database.port: "{{ .Values.config.dbPort }}"
   database.name: "{{ .Values.config.dbName }}"
