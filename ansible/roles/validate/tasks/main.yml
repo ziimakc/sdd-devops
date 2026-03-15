@@ -5,7 +5,7 @@
     kind: Service
     namespace: "{{ kubernetes.namespace }}"
     name: "{{ helm.release_name }}-api"
-  register: api_service
+  register: validate_api_service
 
 - name: Get API pod for port-forward
   kubernetes.core.k8s_info:
@@ -14,39 +14,43 @@
     label_selectors:
       - "app.kubernetes.io/component=api"
       - "app.kubernetes.io/instance={{ helm.release_name }}"
-  register: api_pods
+  register: validate_api_pods
 
 - name: Validate API healthcheck endpoint
   kubernetes.core.k8s_exec:
     namespace: "{{ kubernetes.namespace }}"
-    pod: "{{ api_pods.resources[0].metadata.name }}"
+    pod: "{{ validate_api_pods.resources[0].metadata.name }}"
     command: >
       wget -q -O - --timeout=5 http://localhost:{{ database.port | default(8080) }}{{ validation.api_healthcheck_path }}
-  register: healthcheck_result
+  register: validate_healthcheck_result
   retries: "{{ validation.retry_count }}"
   delay: "{{ validation.retry_delay }}"
-  until: healthcheck_result.rc == 0
+  until: validate_healthcheck_result.rc == 0
   ignore_errors: true
 
 - name: Report healthcheck validation result
   ansible.builtin.debug:
-    msg: "{{ 'PASS' if healthcheck_result.rc == 0 else 'FAIL' }} - API healthcheck endpoint returns status code {{ validation.expected_status }}"
+    msg: >-
+      {{ 'PASS' if validate_healthcheck_result.rc == 0 else 'FAIL' }} -
+      API healthcheck endpoint returns status code {{ validation.expected_status }}
 
 - name: Validate API stats endpoint
   kubernetes.core.k8s_exec:
     namespace: "{{ kubernetes.namespace }}"
-    pod: "{{ api_pods.resources[0].metadata.name }}"
+    pod: "{{ validate_api_pods.resources[0].metadata.name }}"
     command: >
-      wget -q -O - --timeout=5 --spider http://localhost:{{ database.port | default(8080) }}{{ validation.api_stats_path }}
-  register: stats_result
+      wget -q -O - --timeout=5 http://localhost:{{ database.port | default(8080) }}{{ validation.api_stats_path }}
+  register: validate_stats_result
   retries: "{{ validation.retry_count }}"
   delay: "{{ validation.retry_delay }}"
-  until: stats_result.rc == 0
+  until: validate_stats_result.rc == 0
   ignore_errors: true
 
 - name: Report stats validation result
   ansible.builtin.debug:
-    msg: "{{ 'PASS' if stats_result.rc == 0 else 'FAIL' }} - API stats endpoint returns status code {{ validation.expected_status }}"
+    msg: >-
+      {{ 'PASS' if validate_stats_result.rc == 0 else 'FAIL' }} -
+      API stats endpoint returns status code {{ validation.expected_status }}
 
 - name: Get all pods status
   kubernetes.core.k8s_info:
@@ -54,15 +58,19 @@
     namespace: "{{ kubernetes.namespace }}"
     label_selectors:
       - "app.kubernetes.io/instance={{ helm.release_name }}"
-  register: all_pods
+  register: validate_all_pods
 
 - name: Check all pods are Running
   ansible.builtin.set_fact:
-    pods_running: "{{ all_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length == all_pods.resources | length }}"
+    validate_pods_running: >-
+      {{ validate_all_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length ==
+      validate_all_pods.resources | length }}
 
 - name: Report pods status validation result
   ansible.builtin.debug:
-    msg: "{{ 'PASS' if pods_running else 'FAIL' }} - All {{ all_pods.resources | length }} pods are in Running state"
+    msg: >-
+      {{ 'PASS' if validate_pods_running else 'FAIL' }} - All {{ validate_all_pods.resources | length }}
+      pods are in Running state
 
 - name: Get PostgreSQL pod
   kubernetes.core.k8s_info:
@@ -70,38 +78,40 @@
     namespace: "{{ kubernetes.namespace }}"
     label_selectors:
       - "app.kubernetes.io/name=postgresql"
-  register: postgres_pods
+  register: validate_postgres_pods
 
 - name: Validate PostgreSQL connection with pg_isready
   kubernetes.core.k8s_exec:
     namespace: "{{ kubernetes.namespace }}"
-    pod: "{{ postgres_pods.resources[0].metadata.name }}"
+    pod: "{{ validate_postgres_pods.resources[0].metadata.name }}"
     command: pg_isready -U {{ database.user }} -d {{ database.name }}
-  register: postgres_ready
+  register: validate_postgres_ready
   retries: "{{ validation.retry_count }}"
   delay: "{{ validation.retry_delay }}"
-  until: postgres_ready.rc == 0
+  until: validate_postgres_ready.rc == 0
   ignore_errors: true
 
 - name: Report PostgreSQL validation result
   ansible.builtin.debug:
-    msg: "{{ 'PASS' if postgres_ready.rc == 0 else 'FAIL' }} - PostgreSQL accepts connections via pg_isready"
+    msg: >-
+      {{ 'PASS' if validate_postgres_ready.rc == 0 else 'FAIL' }} - PostgreSQL accepts connections
+      via pg_isready
 
 - name: Validation summary
   ansible.builtin.debug:
     msg: |
       ===== SDD Navigator Validation Summary =====
-      Healthcheck endpoint: {{ 'PASS' if healthcheck_result.rc == 0 else 'FAIL' }}
-      Stats endpoint: {{ 'PASS' if stats_result.rc == 0 else 'FAIL' }}
-      All pods Running: {{ 'PASS' if pods_running else 'FAIL' }}
-      PostgreSQL connection: {{ 'PASS' if postgres_ready.rc == 0 else 'FAIL' }}
+      Healthcheck endpoint: {{ 'PASS' if validate_healthcheck_result.rc == 0 else 'FAIL' }}
+      Stats endpoint: {{ 'PASS' if validate_stats_result.rc == 0 else 'FAIL' }}
+      All pods Running: {{ 'PASS' if validate_pods_running else 'FAIL' }}
+      PostgreSQL connection: {{ 'PASS' if validate_postgres_ready.rc == 0 else 'FAIL' }}
       ============================================
 
 - name: Fail if any validation check failed
   ansible.builtin.fail:
     msg: "One or more validation checks failed"
   when: >
-    healthcheck_result.rc != 0 or
-    stats_result.rc != 0 or
-    not pods_running or
-    postgres_ready.rc != 0
+    validate_healthcheck_result.rc != 0 or
+    validate_stats_result.rc != 0 or
+    not validate_pods_running or
+    validate_postgres_ready.rc != 0

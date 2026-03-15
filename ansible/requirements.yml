@@ -1,0 +1,7 @@
+# @req SCI-ANS-001
+# @req SCI-ANS-002
+# Ansible Galaxy requirements - collections needed for deployment and validation
+---
+collections:
+  - name: kubernetes.core
+    version: ">=2.4.0"

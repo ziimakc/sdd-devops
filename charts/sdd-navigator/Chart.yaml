@@ -5,3 +5,10 @@ description: SDD Navigator umbrella chart - API, frontend, and database
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
+dependencies:
+  - name: api
+    version: 0.1.0
+    repository: file://./charts/api
+  - name: frontend
+    version: 0.1.0
+    repository: file://./charts/frontend

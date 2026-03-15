@@ -1,0 +1,28 @@
+# @req SCI-CI-001
+# @req SCI-CI-002
+# yamllint configuration - excludes Helm templates (validated by helm lint instead)
+
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+  indentation:
+    spaces: 2
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false  # Required by ansible-lint
+  braces:
+    max-spaces-inside: 1  # Required by ansible-lint
+  octal-values:
+    forbid-implicit-octal: true  # Required by ansible-lint
+    forbid-explicit-octal: true  # Required by ansible-lint
+  document-start: disable
+  truthy: disable  # GitHub Actions uses 'on:' keyword
+
+ignore: |
+  charts/sdd-navigator/templates/
+  charts/sdd-navigator/charts/api/templates/
+  charts/sdd-navigator/charts/frontend/templates/
+  temp/

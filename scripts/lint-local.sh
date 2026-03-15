@@ -1,4 +1,4 @@
-```#!/usr/bin/env bash
+#!/usr/bin/env bash
 # @req SCI-CI-001
 # @req SCI-CI-002
 # Local linting script - runs same checks as CI pipeline
@@ -21,7 +21,10 @@ if ! command -v yamllint &> /dev/null; then
     exit 1
 fi
 
-yamllint -d '{extends: default, rules: {line-length: {max: 120, level: warning}, indentation: {spaces: 2}, comments: {min-spaces-from-content: 1}}}' .
+# Skip Helm template files - they contain Go template syntax that yamllint can't parse
+# Helm templates are validated separately by 'helm lint'
+# Configuration in .yamllint
+yamllint .
 echo "✅ yamllint passed"
 echo ""
 
@@ -30,6 +33,12 @@ echo "📝 [2/5] Running ansible-lint..."
 if ! command -v ansible-lint &> /dev/null; then
     echo "❌ ansible-lint not found. Install with: pip install ansible-lint ansible-core"
     exit 1
+fi
+
+# Try to install Ansible collections if requirements file exists
+if [[ -f ansible/requirements.yml ]] && command -v ansible-galaxy &> /dev/null; then
+    echo "Installing Ansible collections..."
+    ansible-galaxy collection install -r ansible/requirements.yml --ignore-errors 2>&1 | grep -v "WARNING" || true
 fi
 
 ansible-lint ansible/playbook.yml
@@ -59,13 +68,13 @@ else
     helm template sdd-navigator charts/sdd-navigator \
         --set database.password=test-password \
         --output-dir "$TEMP_DIR"
-    
+
     kubeconform \
         -strict \
         -ignore-missing-schemas \
         -summary \
         "$TEMP_DIR"
-    
+
     rm -rf "$TEMP_DIR"
     echo "✅ manifest validation passed"
 fi
