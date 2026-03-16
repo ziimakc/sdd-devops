@@ -55,6 +55,7 @@ fi
 helm lint charts/sdd-navigator
 helm lint charts/sdd-navigator/charts/api
 helm lint charts/sdd-navigator/charts/frontend
+helm lint charts/sdd-navigator/charts/postgresql
 echo "✅ helm lint passed"
 echo ""
 
@@ -64,9 +65,6 @@ if ! command -v kubeconform &> /dev/null; then
     echo "⚠️  kubeconform not found. Skipping manifest validation."
     echo "    Install from: https://github.com/yannh/kubeconform"
 else
-    echo "Adding Bitnami Helm repository..."
-    helm repo add bitnami https://charts.bitnami.com/bitnami 2>/dev/null || true
-    
     echo "Building Helm dependencies..."
     helm dependency build charts/sdd-navigator
     

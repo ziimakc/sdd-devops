@@ -26,11 +26,6 @@ if ! command -v kubeconform &> /dev/null; then
     exit 1
 fi
 
-# Add Bitnami repository
-echo "📦 Adding Bitnami Helm repository..."
-helm repo add bitnami https://charts.bitnami.com/bitnami 2>/dev/null || true
-echo ""
-
 # Build dependencies
 echo "📦 Building Helm dependencies..."
 helm dependency build charts/sdd-navigator

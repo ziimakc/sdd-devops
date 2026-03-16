@@ -44,20 +44,8 @@ fi
 
 echo ""
 
-# Build mock PostgreSQL image
-echo "Building mock PostgreSQL image (bitnami/postgresql:16.2.0-debian-12-r13)..."
-docker build \
-  -f "${TEST_IMAGES_DIR}/postgresql.Dockerfile" \
-  -t bitnami/postgresql:16.2.0-debian-12-r13 \
-  "${TEST_IMAGES_DIR}"
-
-if [ $? -eq 0 ]; then
-  echo "✓ PostgreSQL image built successfully"
-else
-  echo "✗ Failed to build PostgreSQL image"
-  exit 1
-fi
-
+# PostgreSQL uses official postgres:16.2-alpine image - no build needed
+echo "Note: Using official postgres:16.2-alpine image (no build required)"
 echo ""
 echo "All test images built successfully!"
 echo ""
@@ -85,7 +73,9 @@ if [[ "${CURRENT_CONTEXT}" == kind-* ]]; then
     exit 1
   fi
   
-  kind load docker-image bitnami/postgresql:16.2.0-debian-12-r13 --name "${CLUSTER_NAME}" 2>&1
+  echo "Pre-pulling and loading PostgreSQL image..."
+  docker pull postgres:16.2-alpine 2>&1
+  kind load docker-image postgres:16.2-alpine --name "${CLUSTER_NAME}" 2>&1
   if [ $? -eq 0 ]; then
     echo "✓ PostgreSQL image loaded into kind cluster"
   else
@@ -96,9 +86,9 @@ if [[ "${CURRENT_CONTEXT}" == kind-* ]]; then
   echo ""
 fi
 
-echo "Images created:"
+echo "Images ready:"
 docker images | grep -E "sdd-coverage-api|sdd-navigator-frontend" | grep "0.1.0"
-docker images | grep "bitnami/postgresql" | grep "16.2.0-debian-12-r13"
+docker images | grep "postgres" | grep "16.2-alpine"
 echo ""
-echo "Note: These are minimal dummy images for testing infrastructure only."
-echo "They contain basic nginx/Python servers with mock endpoints, not actual applications."
+echo "Note: API/frontend are minimal dummy images for testing infrastructure only."
+echo "PostgreSQL uses official postgres:16.2-alpine image."

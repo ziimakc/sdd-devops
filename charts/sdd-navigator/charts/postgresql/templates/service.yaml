@@ -1,0 +1,36 @@
+# @req SCI-HELM-002
+# PostgreSQL Service for internal cluster access
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "postgresql.fullname" . }}
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: postgresql
+    port: {{ .Values.service.port }}
+    targetPort: postgresql
+    protocol: TCP
+  selector:
+    {{- include "postgresql.selectorLabels" . | nindent 4 }}
+---
+# @req SCI-HELM-002
+# Headless service for StatefulSet pod discovery
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "postgresql.fullname" . }}-headless
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: postgresql
+    port: {{ .Values.service.port }}
+    targetPort: postgresql
+    protocol: TCP
+  selector:
+    {{- include "postgresql.selectorLabels" . | nindent 4 }}

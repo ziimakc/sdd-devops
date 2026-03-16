@@ -1,0 +1,36 @@
+# @req SCI-HELM-002
+# @req SCI-HELM-006
+# PostgreSQL configuration values
+
+image:
+  registry: docker.io
+  repository: postgres
+  tag: "16.2-alpine"
+  pullPolicy: IfNotPresent
+
+auth:
+  username: sdd_user
+  password: "PLACEHOLDER_MUST_OVERRIDE" # @req SCI-HELM-005
+  database: sdd_navigator
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClass: ""
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+securityContext: # @req SCI-SEC-001
+  runAsUser: 999
+  runAsGroup: 999
+  fsGroup: 999
+  runAsNonRoot: true
+
+service:
+  port: 5432

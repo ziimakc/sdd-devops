@@ -25,4 +25,5 @@ ignore: |
   charts/sdd-navigator/templates/
   charts/sdd-navigator/charts/api/templates/
   charts/sdd-navigator/charts/frontend/templates/
+  charts/sdd-navigator/charts/postgresql/templates/
   temp/

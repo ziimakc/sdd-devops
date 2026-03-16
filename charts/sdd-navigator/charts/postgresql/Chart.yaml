@@ -1,0 +1,7 @@
+# @req SCI-HELM-002
+apiVersion: v2
+name: postgresql
+description: Custom PostgreSQL StatefulSet with PVC for data persistence
+type: application
+version: 0.1.0
+appVersion: "16.2"

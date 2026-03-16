@@ -53,44 +53,35 @@ frontend:
 
 # @req SCI-HELM-002
 # @req SCI-HELM-005
-# Bitnami PostgreSQL chart configuration
+# Custom StatefulSet-based PostgreSQL configuration
 postgresql:
-  enabled: true
+  image:
+    registry: docker.io
+    repository: postgres
+    tag: "16.2-alpine" # @req SCI-SEC-001 - explicit version, no latest
+    pullPolicy: IfNotPresent
   auth:
     username: sdd_user
     password: "PLACEHOLDER_MUST_OVERRIDE" # @req SCI-HELM-005
     database: sdd_navigator
-  primary:
-    persistence:
-      enabled: true
-      size: 10Gi
-      storageClass: ""
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "250m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
-    podSecurityContext: # @req SCI-SEC-001
-      enabled: true
-      fsGroup: 1001
-    containerSecurityContext: # @req SCI-SEC-001
-      enabled: true
-      runAsUser: 1001
-      runAsNonRoot: true
-  volumePermissions: # @req SCI-HELM-002
+  persistence:
     enabled: true
-    image:
-      registry: docker.io
-      repository: bitnami/os-shell
-      tag: 11-debian-11-r93 # @req SCI-SEC-001 - explicit version, no latest
-  image:
-    registry: docker.io
-    repository: bitnami/postgresql
-    tag: "16.2.0-debian-12-r13"
-  metrics:
-    enabled: false
+    size: 10Gi
+    storageClass: ""
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  securityContext: # @req SCI-SEC-001
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
+    runAsNonRoot: true
+  service:
+    port: 5432
 
 ingress: # @req SCI-HELM-004
   enabled: true

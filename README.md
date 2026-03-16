@@ -71,18 +71,19 @@ Test GitHub Actions CI locally with [act](https://github.com/nektos/act) (requir
 
 First run auto-installs act to `temp/bin/` and downloads ~500MB Docker image. Validates: YAML syntax, Ansible playbooks, Helm charts, K8s manifests, traceability annotations.
 
-## PostgreSQL: Bitnami Chart Choice
+## PostgreSQL: Custom StatefulSet
 
-We use the **Bitnami PostgreSQL Helm chart** as a dependency rather than a custom StatefulSet.
+We use a **custom StatefulSet** for PostgreSQL deployment with official `postgres:16.2-alpine` image.
 
 **Rationale:**
-- Battle-tested in thousands of production deployments
-- Regular security patches and updates from Bitnami
-- Feature-complete (replication, backups, metrics exporters, init scripts)
-- Reduced maintenance burden for Kubernetes API changes
-- Industry standard with extensive community support
+- Bitnami recently limited free image availability, creating supply chain risk
+- Direct control over PostgreSQL configuration and lifecycle
+- Minimal dependencies - only official PostgreSQL Docker image
+- Full parsimony compliance - ~150 lines of manifests vs ~1000+ from Bitnami chart
+- Kubernetes-native StatefulSet with PVC ensures data persistence
+- Standard postgres image widely trusted and maintained by PostgreSQL community
 
-**Trade-off:** More configuration surface (~100 options vs ~50 lines of custom YAML) and external dependency, but production-readiness outweighs parsimony for database infrastructure.
+**Implementation:** StatefulSet with persistent volume claim template, credential Secret, readiness/liveness probes, and non-root security context (uid 999).
 
 ## Configuration
 

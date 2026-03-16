@@ -66,6 +66,9 @@ jobs:
       - name: Lint frontend subchart
         run: helm lint charts/sdd-navigator/charts/frontend
 
+      - name: Lint postgresql subchart
+        run: helm lint charts/sdd-navigator/charts/postgresql
+
   validate-manifests:
     name: Validate Kubernetes Manifests
     runs-on: ubuntu-latest
@@ -82,9 +85,6 @@ jobs:
         run: |
           curl -L https://github.com/yannh/kubeconform/releases/download/v0.6.4/kubeconform-linux-amd64.tar.gz | tar xz
           sudo mv kubeconform /usr/local/bin/
-
-      - name: Add Bitnami Helm repository
-        run: helm repo add bitnami https://charts.bitnami.com/bitnami
 
       - name: Build Helm dependencies
         run: helm dependency build charts/sdd-navigator
