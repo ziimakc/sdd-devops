@@ -73,12 +73,13 @@ run_yamllint() {
         return 1
     fi
     
-    if yamllint -c "${PROJECT_ROOT}/.yamllint" "${PROJECT_ROOT}"; then
+    cd "${PROJECT_ROOT}"
+    if yamllint -c .yamllint .; then
         log_success "yamllint passed"
         return 0
     else
-        log_warning "yamllint found issues"
-        return 0  # Don't fail on warnings
+        log_error "yamllint found issues"
+        return 1
     fi
 }
 

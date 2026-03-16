@@ -1,5 +1,6 @@
 # @req SCI-HELM-005
 # @req SCI-HELM-006
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
