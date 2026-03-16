@@ -55,7 +55,6 @@ curl http://localhost:8080/healthcheck
 | `scripts/check-traceability.sh` | Verify @req annotations present |
 | `scripts/validate-req-references.sh` | Verify @req references are valid |
 | `scripts/lint-local.sh` | Lint all infrastructure code |
-| `scripts/run-demo.sh` | Demonstrate CI violation detection |
 
 ## PostgreSQL: Bitnami Chart Choice
 
