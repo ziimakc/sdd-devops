@@ -25,6 +25,9 @@ Infrastructure as Code for deploying the SDD Navigator stack (Rust API, Next.js 
 ## Quick Start
 
 ```bash
+# Build dummy test images (required for testing - not real applications)
+./scripts/build-test-images.sh
+
 # Deploy with Ansible (recommended)
 export DB_PASSWORD="your-secure-password"
 ansible-playbook -i ansible/inventory/local.yml ansible/playbook.yml
@@ -41,10 +44,13 @@ kubectl port-forward -n sdd-navigator svc/sdd-navigator-api 8080:8080
 curl http://localhost:8080/healthcheck
 ```
 
+**Note:** The `sdd-coverage-api` and `sdd-navigator-frontend` Docker images referenced in the Helm chart do not exist yet. For infrastructure testing, use `scripts/build-test-images.sh` to create minimal dummy images with mock endpoints.
+
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
+| `scripts/build-test-images.sh` | Build minimal dummy images for testing |
 | `scripts/test-e2e-deployment.sh` | Full deployment test with validation |
 | `scripts/check-traceability.sh` | Verify @req annotations present |
 | `scripts/validate-req-references.sh` | Verify @req references are valid |
@@ -71,6 +77,20 @@ All values centralized in `charts/sdd-navigator/values.yaml`. Override via `--se
 ## Prerequisites
 
 - Kubernetes cluster (v1.28+)
-- Helm 3.14+
-- Ansible 2.15+ with `kubernetes.core` collection
+- Helm 3.x (3.14+ recommended, 4.x not yet supported by kubernetes.core)
+- Ansible 2.15+ with collections:
+  - `kubernetes.core` (>=2.4.0)
+  - `ansible.posix` (>=1.5.0)
+- Python 3.9+ with libraries:
+  - `kubernetes` (>=24.2.0)
+  - `PyYAML` (>=3.11)
+  - `jsonpatch` (>=1.32)
 - kubectl configured with cluster access
+
+```bash
+# Install Ansible collections
+ansible-galaxy collection install -r ansible/requirements.yml
+
+# Install Python dependencies
+pip3 install -r ansible/requirements.txt
+```

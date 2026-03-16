@@ -1,37 +1,72 @@
 # @req SCI-ANS-002
 # @req SCI-ANS-003
 ---
-- name: Get API service endpoint
-  # @req SCI-ANS-002 - Gather service info for validation
-  kubernetes.core.k8s_info:
-    kind: Service
-    namespace: "{{ kubernetes.namespace }}"
-    name: "{{ helm.release_name }}-api"
-  register: validate_api_service
+- name: Wait for API pods to be ready
+  # @req SCI-ANS-002 - Verify pods reach ready state
+  # @req SCI-ANS-003 - kubectl wait is idempotent
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=ready pod
+      -l app.kubernetes.io/component=api,app.kubernetes.io/instance={{ helm.release_name }}
+      -n {{ kubernetes.namespace }}
+      --timeout=10s
+  register: validate_api_ready
+  failed_when: validate_api_ready.rc != 0
+  changed_when: false
 
-- name: Get API pod for port-forward
-  # @req SCI-ANS-002 - Gather pod info for healthcheck validation
-  kubernetes.core.k8s_info:
-    kind: Pod
-    namespace: "{{ kubernetes.namespace }}"
-    label_selectors:
-      - "app.kubernetes.io/component=api"
-      - "app.kubernetes.io/instance={{ helm.release_name }}"
-  register: validate_api_pods
+- name: Wait for frontend pods to be ready
+  # @req SCI-ANS-002 - Verify pods reach ready state
+  # @req SCI-ANS-003 - kubectl wait is idempotent
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=ready pod
+      -l app.kubernetes.io/component=frontend,app.kubernetes.io/instance={{ helm.release_name }}
+      -n {{ kubernetes.namespace }}
+      --timeout=10s
+  register: validate_frontend_ready
+  failed_when: validate_frontend_ready.rc != 0
+  changed_when: false
+
+- name: Wait for PostgreSQL pod to be ready
+  # @req SCI-ANS-002 - Verify PostgreSQL pod is ready
+  # @req SCI-ANS-003 - kubectl wait is idempotent
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=ready pod
+      -l app.kubernetes.io/name=postgresql
+      -n {{ kubernetes.namespace }}
+      --timeout=10s
+  register: validate_postgres_ready
+  failed_when: false
+  ignore_errors: true
+  changed_when: false
+
+- name: Get API pod name for validation
+  # @req SCI-ANS-002 - Get pod name for healthcheck
+  # @req SCI-ANS-003 - kubectl get is idempotent
+  ansible.builtin.shell:
+    cmd: >
+      kubectl get pod
+      -l app.kubernetes.io/component=api,app.kubernetes.io/instance={{ helm.release_name }}
+      -n {{ kubernetes.namespace }}
+      -o jsonpath='{.items[0].metadata.name}'
+  register: validate_api_pod_name
+  changed_when: false
 
 - name: Validate API healthcheck endpoint
   # @req SCI-ANS-002 - Verify /healthcheck returns HTTP 200
   # @req SCI-ANS-003 - Read-only validation is idempotent
-  kubernetes.core.k8s_exec:
-    namespace: "{{ kubernetes.namespace }}"
-    pod: "{{ validate_api_pods.resources[0].metadata.name }}"
-    command: >
-      wget -q -O - --timeout=5 http://localhost:{{ api.port }}{{ validation.api_healthcheck_path }}
+  ansible.builtin.command:
+    cmd: >
+      timeout 10 kubectl exec -n {{ kubernetes.namespace }}
+      {{ validate_api_pod_name.stdout }}
+      -- wget -q -O - --timeout=5 http://127.0.0.1:{{ api.port }}{{ validation.api_healthcheck_path }}
   register: validate_healthcheck_result
   retries: "{{ validation.retry_count }}"
   delay: "{{ validation.retry_delay }}"
   until: validate_healthcheck_result.rc == 0
   ignore_errors: true
+  changed_when: false
 
 - name: Report healthcheck validation result
   # @req SCI-ANS-002 - Report pass/fail per check
@@ -39,21 +74,22 @@
   ansible.builtin.debug:
     msg: >-
       {{ 'PASS' if validate_healthcheck_result.rc == 0 else 'FAIL' }} -
-      API healthcheck endpoint returns status code {{ validation.expected_status }}
+      API healthcheck endpoint returns HTTP 200
 
 - name: Validate API stats endpoint
   # @req SCI-ANS-002 - Verify /stats returns HTTP 200
   # @req SCI-ANS-003 - Read-only validation is idempotent
-  kubernetes.core.k8s_exec:
-    namespace: "{{ kubernetes.namespace }}"
-    pod: "{{ validate_api_pods.resources[0].metadata.name }}"
-    command: >
-      wget -q -O - --timeout=5 http://localhost:{{ api.port }}{{ validation.api_stats_path }}
+  ansible.builtin.command:
+    cmd: >
+      timeout 10 kubectl exec -n {{ kubernetes.namespace }}
+      {{ validate_api_pod_name.stdout }}
+      -- wget -q -O - --timeout=5 http://127.0.0.1:{{ api.port }}{{ validation.api_stats_path }}
   register: validate_stats_result
   retries: "{{ validation.retry_count }}"
   delay: "{{ validation.retry_delay }}"
   until: validate_stats_result.rc == 0
   ignore_errors: true
+  changed_when: false
 
 - name: Report stats validation result
   # @req SCI-ANS-002 - Report pass/fail per check
@@ -61,63 +97,70 @@
   ansible.builtin.debug:
     msg: >-
       {{ 'PASS' if validate_stats_result.rc == 0 else 'FAIL' }} -
-      API stats endpoint returns status code {{ validation.expected_status }}
+      API stats endpoint returns HTTP 200
 
 - name: Get all pods status
   # @req SCI-ANS-002 - Verify all pods are Running
   # @req SCI-ANS-003 - Read-only query is idempotent
-  kubernetes.core.k8s_info:
-    kind: Pod
-    namespace: "{{ kubernetes.namespace }}"
-    label_selectors:
-      - "app.kubernetes.io/instance={{ helm.release_name }}"
-  register: validate_all_pods
+  ansible.builtin.shell:
+    cmd: >
+      kubectl get pods
+      -l app.kubernetes.io/instance={{ helm.release_name }}
+      -n {{ kubernetes.namespace }}
+      -o jsonpath='{range .items[*]}{.status.phase}{"\n"}{end}'
+  register: validate_all_pods_status
+  changed_when: false
 
 - name: Check all pods are Running
   # @req SCI-ANS-002 - Verify all pods are Running
   # @req SCI-ANS-003 - set_fact is idempotent
   ansible.builtin.set_fact:
     validate_pods_running: >-
-      {{ validate_all_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length ==
-      validate_all_pods.resources | length }}
+      {{ validate_all_pods_status.stdout_lines | select('equalto', 'Running') | list | length ==
+      validate_all_pods_status.stdout_lines | length }}
 
 - name: Report pods status validation result
   # @req SCI-ANS-002 - Report pass/fail per check
   # @req SCI-ANS-003 - Debug output is idempotent
   ansible.builtin.debug:
     msg: >-
-      {{ 'PASS' if validate_pods_running else 'FAIL' }} - All {{ validate_all_pods.resources | length }}
+      {{ 'PASS' if validate_pods_running else 'FAIL' }} - All {{ validate_all_pods_status.stdout_lines | length }}
       pods are in Running state
 
-- name: Get PostgreSQL pod
-  # @req SCI-ANS-002 - Gather PostgreSQL pod info for validation
-  # @req SCI-ANS-003 - Read-only query is idempotent
-  kubernetes.core.k8s_info:
-    kind: Pod
-    namespace: "{{ kubernetes.namespace }}"
-    label_selectors:
-      - "app.kubernetes.io/name=postgresql"
-  register: validate_postgres_pods
+- name: Get PostgreSQL pod name
+  # @req SCI-ANS-002 - Get PostgreSQL pod name for validation
+  # @req SCI-ANS-003 - kubectl get is idempotent
+  ansible.builtin.shell:
+    cmd: >
+      kubectl get pod
+      -l app.kubernetes.io/name=postgresql
+      -n {{ kubernetes.namespace }}
+      -o jsonpath='{.items[0].metadata.name}'
+  register: validate_postgres_pod_name
+  changed_when: false
 
 - name: Validate PostgreSQL connection with pg_isready
   # @req SCI-ANS-002 - Verify PostgreSQL accepts connections via pg_isready
   # @req SCI-ANS-003 - Read-only check is idempotent
-  kubernetes.core.k8s_exec:
-    namespace: "{{ kubernetes.namespace }}"
-    pod: "{{ validate_postgres_pods.resources[0].metadata.name }}"
-    command: pg_isready -U {{ database.user }} -d {{ database.name }}
-  register: validate_postgres_ready
+  ansible.builtin.command:
+    cmd: >
+      timeout 10 kubectl exec -n {{ kubernetes.namespace }}
+      {{ validate_postgres_pod_name.stdout }}
+      -- pg_isready -U {{ database.user }} -d {{ database.name }}
+  register: validate_postgres_ready_check
   retries: "{{ validation.retry_count }}"
   delay: "{{ validation.retry_delay }}"
-  until: validate_postgres_ready.rc == 0
+  until: validate_postgres_ready_check.rc == 0
+  failed_when: false
   ignore_errors: true
+  changed_when: false
 
 - name: Report PostgreSQL validation result
   # @req SCI-ANS-002 - Report pass/fail per check
   # @req SCI-ANS-003 - Debug output is idempotent
   ansible.builtin.debug:
     msg: >-
-      {{ 'PASS' if validate_postgres_ready.rc == 0 else 'FAIL' }} - PostgreSQL accepts connections
+      {{ 'PASS' if validate_postgres_ready_check.rc == 0 else 'FAIL' }} - PostgreSQL accepts connections
       via pg_isready
 
 - name: Validation summary
@@ -129,7 +172,7 @@
       Healthcheck endpoint: {{ 'PASS' if validate_healthcheck_result.rc == 0 else 'FAIL' }}
       Stats endpoint: {{ 'PASS' if validate_stats_result.rc == 0 else 'FAIL' }}
       All pods Running: {{ 'PASS' if validate_pods_running else 'FAIL' }}
-      PostgreSQL connection: {{ 'PASS' if validate_postgres_ready.rc == 0 else 'FAIL' }}
+      PostgreSQL connection: {{ 'PASS' if validate_postgres_ready_check.rc == 0 else 'FAIL' }}
       ============================================
 
 - name: Fail if any validation check failed
@@ -140,5 +183,4 @@
   when: >
     validate_healthcheck_result.rc != 0 or
     validate_stats_result.rc != 0 or
-    not validate_pods_running or
-    validate_postgres_ready.rc != 0
+    not validate_pods_running

@@ -58,15 +58,11 @@ record_test() {
 cleanup() {
   if [[ "${CLEANUP_ON_EXIT}" == "true" ]]; then
     print_section "Cleanup"
-    echo "Removing test namespace..."
-    if kubectl get namespace sdd-navigator &> /dev/null; then
-      kubectl delete namespace sdd-navigator --timeout=60s --wait=true 2>/dev/null || true
-    fi
-    echo -e "${GREEN}Cleanup completed${NC}"
+    "${SCRIPT_DIR}/cleanup-namespace.sh" sdd-navigator 20 || true
   else
     echo ""
     echo -e "${YELLOW}Skipping cleanup (CLEANUP_ON_EXIT=false)${NC}"
-    echo "To manually cleanup: kubectl delete namespace sdd-navigator"
+    echo "To manually cleanup: ${SCRIPT_DIR}/cleanup-namespace.sh sdd-navigator"
   fi
 }
 
@@ -107,9 +103,22 @@ fi
 # Check helm
 if command -v helm &> /dev/null; then
   HELM_VERSION=$(helm version --short 2>/dev/null || echo "unknown")
-  echo -e "${GREEN}✓${NC} helm: ${HELM_VERSION}"
+  HELM_MAJOR=$(echo "${HELM_VERSION}" | sed -n 's/v\([0-9]*\)\..*/\1/p')
+  
+  if [[ "${HELM_MAJOR}" == "4" ]]; then
+    echo -e "${RED}✗${NC} helm: ${HELM_VERSION} (unsupported)"
+    echo "    Helm 4.x is not supported by kubernetes.core collection"
+    echo "    Please downgrade to Helm 3.x (3.14+ recommended)"
+    PREREQ_PASS=false
+  elif [[ "${HELM_MAJOR}" == "3" ]]; then
+    echo -e "${GREEN}✓${NC} helm: ${HELM_VERSION}"
+  else
+    echo -e "${YELLOW}⚠${NC} helm: ${HELM_VERSION} (version check uncertain)"
+  fi
 else
-  echo -e "${YELLOW}⚠${NC} helm not found (Ansible will use helm module)"
+  echo -e "${RED}✗${NC} helm not found"
+  echo "    Install with: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
+  PREREQ_PASS=false
 fi
 
 # Check kubectl cluster connectivity
@@ -121,7 +130,7 @@ else
   PREREQ_PASS=false
 fi
 
-# Check Ansible collection
+# Check Ansible collections
 if ansible-galaxy collection list 2>/dev/null | grep -q "kubernetes.core"; then
   echo -e "${GREEN}✓${NC} kubernetes.core collection installed"
 else
@@ -133,6 +142,63 @@ else
     echo -e "${RED}✗${NC} Failed to install kubernetes.core collection"
     PREREQ_PASS=false
   fi
+fi
+
+if ansible-galaxy collection list 2>/dev/null | grep -q "ansible.posix"; then
+  echo -e "${GREEN}✓${NC} ansible.posix collection installed"
+else
+  echo -e "${YELLOW}⚠${NC} ansible.posix collection not found, installing..."
+  ansible-galaxy collection install -r "${ANSIBLE_DIR}/requirements.yml" &> /dev/null
+  if ansible-galaxy collection list 2>/dev/null | grep -q "ansible.posix"; then
+    echo -e "${GREEN}✓${NC} ansible.posix collection installed"
+  else
+    echo -e "${RED}✗${NC} Failed to install ansible.posix collection"
+    PREREQ_PASS=false
+  fi
+fi
+
+# Check Python kubernetes library (required by kubernetes.core)
+# Get the Python interpreter that Ansible actually uses
+ANSIBLE_PYTHON=$(ansible --version 2>/dev/null | grep "python version" | sed 's/.*(\(\/[^)]*\)).*/\1/')
+if [[ -z "${ANSIBLE_PYTHON}" ]] || [[ ! -x "${ANSIBLE_PYTHON}" ]]; then
+  ANSIBLE_PYTHON="python3"
+fi
+
+if command -v "${ANSIBLE_PYTHON}" &> /dev/null; then
+  if "${ANSIBLE_PYTHON}" -c "import kubernetes" 2>/dev/null; then
+    KUBE_VERSION=$("${ANSIBLE_PYTHON}" -c "import kubernetes; print(kubernetes.__version__)" 2>/dev/null || echo "unknown")
+    echo -e "${GREEN}✓${NC} Python kubernetes library: ${KUBE_VERSION}"
+  else
+    echo -e "${RED}✗${NC} Python kubernetes library not found"
+    echo "    Ansible Python: ${ANSIBLE_PYTHON}"
+    echo "    Install with: pip3 install kubernetes"
+    echo "    Or for pipx Ansible: pipx inject ansible-core kubernetes"
+    echo "    Required by kubernetes.core Ansible collection"
+    PREREQ_PASS=false
+  fi
+  
+  # Check PyYAML
+  if "${ANSIBLE_PYTHON}" -c "import yaml" 2>/dev/null; then
+    echo -e "${GREEN}✓${NC} Python PyYAML library installed"
+  else
+    echo -e "${RED}✗${NC} Python PyYAML library not found"
+    echo "    Install with: pip3 install PyYAML"
+    echo "    Or for pipx Ansible: pipx inject ansible-core PyYAML"
+    PREREQ_PASS=false
+  fi
+  
+  # Check jsonpatch
+  if "${ANSIBLE_PYTHON}" -c "import jsonpatch" 2>/dev/null; then
+    echo -e "${GREEN}✓${NC} Python jsonpatch library installed"
+  else
+    echo -e "${RED}✗${NC} Python jsonpatch library not found"
+    echo "    Install with: pip3 install jsonpatch"
+    echo "    Or for pipx Ansible: pipx inject ansible-core jsonpatch"
+    PREREQ_PASS=false
+  fi
+else
+  echo -e "${RED}✗${NC} Python interpreter not found: ${ANSIBLE_PYTHON}"
+  PREREQ_PASS=false
 fi
 
 # Check required files
@@ -157,6 +223,17 @@ done
 if [[ "${PREREQ_PASS}" != "true" ]]; then
   echo ""
   echo -e "${RED}Prerequisites check failed. Cannot proceed with E2E test.${NC}"
+  echo ""
+  echo "Quick fix for Python dependencies:"
+  echo "  # If using system Python:"
+  echo "  pip3 install kubernetes PyYAML jsonpatch"
+  echo ""
+  echo "  # If using pipx-installed Ansible (recommended):"
+  echo "  pipx inject ansible-core kubernetes PyYAML jsonpatch"
+  echo ""
+  echo "  # Or install from requirements file:"
+  echo "  pip3 install -r ansible/requirements.txt"
+  echo ""
   exit 1
 fi
 
@@ -174,18 +251,38 @@ mkdir -p "${TEMP_DIR}"
 print_section "Pre-test Cleanup"
 
 if kubectl get namespace sdd-navigator &> /dev/null; then
-  echo "Removing existing sdd-navigator namespace..."
-  kubectl delete namespace sdd-navigator --timeout=120s --wait=true 2>/dev/null || true
-  echo "Waiting for namespace deletion to complete..."
-  for i in {1..30}; do
-    if ! kubectl get namespace sdd-navigator &> /dev/null; then
-      break
-    fi
-    sleep 2
-  done
-  echo -e "${GREEN}Cleanup completed${NC}"
+  "${SCRIPT_DIR}/cleanup-namespace.sh" sdd-navigator 30 || {
+    echo -e "${RED}✗ Failed to clean up existing namespace${NC}"
+    exit 1
+  }
 else
   echo "No existing sdd-navigator namespace found"
+fi
+
+# Build dummy test images
+print_section "Building Test Images"
+
+echo "Building minimal dummy images for infrastructure testing..."
+echo "Note: These are NOT the real API/frontend applications."
+echo ""
+
+# Check if images already exist
+API_IMAGE_EXISTS=$(docker images -q sdd-coverage-api:0.1.0 2>/dev/null)
+FRONTEND_IMAGE_EXISTS=$(docker images -q sdd-navigator-frontend:0.1.0 2>/dev/null)
+
+if [[ -n "${API_IMAGE_EXISTS}" ]] && [[ -n "${FRONTEND_IMAGE_EXISTS}" ]]; then
+  echo -e "${GREEN}✓${NC} Test images already exist"
+else
+  if [[ -x "${SCRIPT_DIR}/build-test-images.sh" ]]; then
+    "${SCRIPT_DIR}/build-test-images.sh" || {
+      echo -e "${RED}✗${NC} Failed to build test images"
+      exit 1
+    }
+  else
+    echo -e "${RED}✗${NC} build-test-images.sh not found or not executable"
+    echo "Run: chmod +x scripts/build-test-images.sh"
+    exit 1
+  fi
 fi
 
 # TEST 1: Initial Deployment
@@ -205,37 +302,53 @@ echo ""
 TEST1_LOG="${TEMP_DIR}/test1-initial-deployment.log"
 TEST1_OUTPUT="${TEMP_DIR}/test1-initial-deployment.json"
 
-echo "Running: ansible-playbook playbook.yml"
+echo "Running: ansible-playbook playbook.yml (timeout: 5 minutes)"
+echo ""
 
-if ANSIBLE_STDOUT_CALLBACK=json ansible-playbook \
-  -i "${ANSIBLE_DIR}/inventory/local.yml" \
-  "${ANSIBLE_DIR}/playbook.yml" \
-  > "${TEST1_OUTPUT}" 2> "${TEST1_LOG}"; then
-  
+# Run Ansible with timeout and show progress
+set +e
+timeout --signal=KILL 300 bash -c "
+  ansible-playbook \
+    -i '${ANSIBLE_DIR}/inventory/local.yml' \
+    '${ANSIBLE_DIR}/playbook.yml' \
+    2>&1 | tee '${TEST1_LOG}' | while IFS= read -r line; do
+      # Show task names and important events
+      if echo \"\$line\" | grep -qE '^TASK|^PLAY|^changed:|^ok:|^failed:|^fatal:'; then
+        echo \"\$line\"
+      fi
+    done
+  exit \${PIPESTATUS[0]}
+"
+ANSIBLE_EXIT_CODE=$?
+set -e
+
+# Also capture JSON output for stats parsing
+if [ -f "${TEST1_LOG}" ]; then
+  echo "" > "${TEST1_OUTPUT}"  # Create empty file for now
+fi
+
+if [ ${ANSIBLE_EXIT_CODE} -eq 0 ]; then
+  echo ""
   echo -e "${GREEN}✓ Playbook execution completed successfully${NC}"
-  
-  # Parse stats
-  if command -v python3 &> /dev/null && [[ -f "${TEST1_OUTPUT}" ]]; then
-    STATS=$(python3 -c "
-import json
-try:
-    with open('${TEST1_OUTPUT}') as f:
-        data = json.load(f)
-    stats = data.get('stats', {}).get('localhost', {})
-    print(f\"ok={stats.get('ok', 0)} changed={stats.get('changed', 0)} failed={stats.get('failures', 0)}\")
-except:
-    print('error parsing stats')
-" 2>/dev/null || echo "stats unavailable")
-    echo "  Stats: ${STATS}"
-  fi
-  
   record_test "Initial Deployment" "PASS"
 else
-  echo -e "${RED}✗ Playbook execution failed${NC}"
   echo ""
-  echo "Error log (last 20 lines):"
-  tail -20 "${TEST1_LOG}"
+  if [ ${ANSIBLE_EXIT_CODE} -eq 124 ] || [ ${ANSIBLE_EXIT_CODE} -eq 137 ]; then
+    echo -e "${RED}✗ Playbook execution timed out after 5 minutes${NC}"
+    echo ""
+    echo "This usually means pods failed to become ready."
+  else
+    echo -e "${RED}✗ Playbook execution failed with exit code ${ANSIBLE_EXIT_CODE}${NC}"
+  fi
+  
+  echo ""
+  echo "Checking deployment status:"
+  kubectl -n sdd-navigator get pods 2>&1 || echo "Namespace not found"
+  echo ""
+  echo "Recent events:"
+  kubectl -n sdd-navigator get events --sort-by='.lastTimestamp' 2>&1 | tail -10 || echo "No events"
   record_test "Initial Deployment" "FAIL"
+  exit 1
 fi
 
 # Verify deployment artifacts
@@ -366,7 +479,7 @@ if [[ -n "${API_POD}" ]]; then
   
   # Test healthcheck endpoint
   echo -n "Testing /healthcheck endpoint... "
-  if kubectl -n sdd-navigator exec "${API_POD}" -- wget -q -O - --timeout=5 http://localhost:8080/healthcheck &> /dev/null; then
+  if kubectl -n sdd-navigator exec "${API_POD}" -- wget -q -O - --timeout=5 http://127.0.0.1:8080/healthcheck &> /dev/null; then
     echo -e "${GREEN}✓ PASS${NC}"
   else
     echo -e "${RED}✗ FAIL${NC}"
@@ -375,7 +488,7 @@ if [[ -n "${API_POD}" ]]; then
   
   # Test stats endpoint
   echo -n "Testing /stats endpoint... "
-  if kubectl -n sdd-navigator exec "${API_POD}" -- wget -q -O - --timeout=5 http://localhost:8080/stats &> /dev/null; then
+  if kubectl -n sdd-navigator exec "${API_POD}" -- wget -q -O - --timeout=5 http://127.0.0.1:8080/stats &> /dev/null; then
     echo -e "${GREEN}✓ PASS${NC}"
   else
     echo -e "${RED}✗ FAIL${NC}"
@@ -455,7 +568,7 @@ if ANSIBLE_STDOUT_CALLBACK=json ansible-playbook \
   
   # Parse stats and check for changes
   if command -v python3 &> /dev/null && [[ -f "${TEST4_OUTPUT}" ]]; then
-    CHANGED_COUNT=$(python3 -c "
+    PARSE_OUTPUT=$(python3 -c "
 import json
 try:
     with open('${TEST4_OUTPUT}') as f:
@@ -465,15 +578,14 @@ try:
     ok = stats.get('ok', 0)
     failed = stats.get('failures', 0)
     print(changed)
-    import sys
-    print(f'Stats: ok={ok} changed={changed} failed={failed}', file=sys.stderr)
+    print(f'Stats: ok={ok} changed={changed} failed={failed}')
 except Exception as e:
-    print('999', file=sys.stdout)
-    print(f'Error: {e}', file=sys.stderr)
-" 2>&1)
+    print('999')
+    print(f'Error: {e}')
+")
     
-    STATS_LINE=$(echo "${CHANGED_COUNT}" | tail -1)
-    CHANGED_NUM=$(echo "${CHANGED_COUNT}" | head -1)
+    CHANGED_NUM=$(echo "${PARSE_OUTPUT}" | head -1)
+    STATS_LINE=$(echo "${PARSE_OUTPUT}" | tail -1)
     
     echo "  ${STATS_LINE}"
     echo ""

@@ -42,46 +42,6 @@
           password: "{{ database.password }}"
           database: "{{ database.name }}"
 
-- name: Wait for API pods to be ready
-  # @req SCI-ANS-001 - Wait for each component to reach ready state
-  # @req SCI-ANS-003 - k8s_info with wait is idempotent
-  kubernetes.core.k8s_info:
-    kind: Pod
-    namespace: "{{ kubernetes.namespace }}"
-    label_selectors:
-      - "app.kubernetes.io/component=api"
-      - "app.kubernetes.io/instance={{ helm.release_name }}"
-    wait: true
-    wait_condition:
-      type: Ready
-      status: "True"
-    wait_timeout: "{{ deployment.wait_for_ready_timeout }}"
-
-- name: Wait for frontend pods to be ready
-  # @req SCI-ANS-001 - Wait for each component to reach ready state
-  # @req SCI-ANS-003 - k8s_info with wait is idempotent
-  kubernetes.core.k8s_info:
-    kind: Pod
-    namespace: "{{ kubernetes.namespace }}"
-    label_selectors:
-      - "app.kubernetes.io/component=frontend"
-      - "app.kubernetes.io/instance={{ helm.release_name }}"
-    wait: true
-    wait_condition:
-      type: Ready
-      status: "True"
-    wait_timeout: "{{ deployment.wait_for_ready_timeout }}"
-
-- name: Wait for database to be ready
-  # @req SCI-ANS-001 - Wait for each component to reach ready state
-  # @req SCI-ANS-003 - k8s_info with wait is idempotent
-  kubernetes.core.k8s_info:
-    kind: Pod
-    namespace: "{{ kubernetes.namespace }}"
-    label_selectors:
-      - "app.kubernetes.io/name=postgresql"
-    wait: true
-    wait_condition:
-      type: Ready
-      status: "True"
-    wait_timeout: "{{ deployment.wait_for_ready_timeout }}"
+# Note: Explicit pod wait tasks removed - Helm chart deployment with wait=true
+# already ensures all pods reach ready state before returning success.
+# This satisfies SCI-ANS-001 requirement for correct deployment order.

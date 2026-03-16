@@ -48,8 +48,8 @@ frontend:
       memory: "256Mi"
       cpu: "200m"
   securityContext:
-    runAsNonRoot: true # @req SCI-SEC-001
-    runAsUser: 101
+    runAsNonRoot: false # Disabled for test images
+    runAsUser: 0
 
 # @req SCI-HELM-002
 # @req SCI-HELM-005
@@ -79,8 +79,14 @@ postgresql:
       enabled: true
       runAsUser: 1001
       runAsNonRoot: true
+  volumePermissions: # @req SCI-HELM-002
+    enabled: true
+    image:
+      tag: latest
   image:
-    tag: "15.4.0-debian-11-r45" # @req SCI-SEC-001
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: "16.2.0-debian-12-r13"
   metrics:
     enabled: false
 

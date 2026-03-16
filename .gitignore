@@ -1,1 +1,5 @@
 /temp
+
+# Helm packaged charts (build artifacts)
+charts/**/charts/*.tgz
+*.tgz

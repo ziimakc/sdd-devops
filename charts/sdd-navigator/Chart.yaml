@@ -13,6 +13,6 @@ dependencies:
     version: 0.1.0
     repository: file://./charts/frontend
   - name: postgresql
-    version: 13.2.24
+    version: 13.2.30
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled

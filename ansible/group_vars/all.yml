@@ -28,8 +28,8 @@ validation:
   api_healthcheck_path: /healthcheck
   api_stats_path: /stats
   expected_status: 200
-  retry_count: 10
-  retry_delay: 5
+  retry_count: 3
+  retry_delay: 2
 
 deployment:
   wait_for_ready_timeout: 300

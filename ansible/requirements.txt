@@ -1,0 +1,12 @@
+# @req SCI-ANS-001
+# @req SCI-ANS-002
+# Python dependencies required by Ansible collections and playbooks
+# Install with: pip3 install -r requirements.txt
+
+# Required by kubernetes.core collection
+kubernetes>=24.2.0
+PyYAML>=3.11
+jsonpatch>=1.32
+
+# Optional but recommended for better performance
+jmespath>=1.0.0
