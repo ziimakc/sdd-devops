@@ -247,19 +247,19 @@
           ansible.builtin.debug:
             msg: |
               PostgreSQL StatefulSet failed to become ready after 400 seconds (40 retries * 10s)
-              
+
               === PostgreSQL Pods ===
               {{ postgres_pods.stdout | default('Failed to retrieve') }}
-              
+
               === PVC Status ===
               {{ postgres_pvc.stdout | default('Failed to retrieve') }}
-              
+
               === PV Status ===
               {{ postgres_pv.stdout | default('Failed to retrieve') }}
-              
+
               === Storage Classes ===
               {{ storage_classes.stdout | default('Failed to retrieve') }}
-              
+
               === StatefulSet Status ===
               Ready Replicas: {{ postgres_sts.resources[0].status.readyReplicas | default(0) }}
               Current Replicas: {{ postgres_sts.resources[0].status.replicas | default(0) }}
