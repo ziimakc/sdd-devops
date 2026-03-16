@@ -562,7 +562,7 @@
             - Healthcheck validation: {{ 'PASS' if test_healthcheck.rc == 0 else 'FAIL' }}
             - Stats validation: {{ 'PASS' if test_stats.rc == 0 else 'FAIL' }}
             - All pods Running: PASS
-            - PostgreSQL connection: {{ 'PASS' if test_postgres_ready.rc == 0 else 'FAIL' }}
+            - PostgreSQL connection: {{ 'PASS' if test_pg_ready.rc == 0 else 'FAIL' }}
             - Idempotency: {{ 'PASS' if not helm_deploy_second.changed else 'FAIL' }}
 
           Test Duration: {{ deployment_duration }} seconds
