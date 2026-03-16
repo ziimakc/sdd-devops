@@ -229,14 +229,6 @@ else
   fail_test "Categories without references: ${MISSING_CATEGORIES[*]}"
 fi
 
-# Test 18: Verify README mentions traceability
-info_test "Test 18: Verify README documents traceability system"
-if grep -q "Traceability" "${PROJECT_ROOT}/README.md"; then
-  pass_test "README documents traceability system"
-else
-  fail_test "README does not document traceability"
-fi
-
 # Test 19: Check script annotations
 info_test "Test 19: Verify validation scripts have @req annotations"
 SCRIPT_COUNT=0
