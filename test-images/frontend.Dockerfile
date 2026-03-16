@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # @req SCI-ANS-001
 # Minimal dummy frontend image for E2E infrastructure testing
 FROM nginx:1.25-alpine

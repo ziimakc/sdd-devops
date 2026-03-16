@@ -1,11 +1,12 @@
+# syntax=docker/dockerfile:1
 # @req SCI-ANS-001
 # Minimal dummy API image for E2E infrastructure testing
 FROM python:3.11-alpine
 
 WORKDIR /app
 
-# Create simple HTTP server script using cat with heredoc
-RUN cat > server.py << 'EOF'
+# Create simple HTTP server script
+RUN cat <<'EOF' > server.py
 import http.server
 import socketserver
 import os
