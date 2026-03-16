@@ -83,6 +83,9 @@ jobs:
           curl -L https://github.com/yannh/kubeconform/releases/download/v0.6.4/kubeconform-linux-amd64.tar.gz | tar xz
           sudo mv kubeconform /usr/local/bin/
 
+      - name: Build Helm dependencies
+        run: helm dependency build charts/sdd-navigator
+
       - name: Render Helm templates
         run: |
           helm template sdd-navigator charts/sdd-navigator \
