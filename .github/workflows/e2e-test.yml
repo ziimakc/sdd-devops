@@ -88,6 +88,18 @@ jobs:
         run: |
           helm dependency update charts/sdd-navigator
 
+      - name: Verify storage class availability
+        # @req SCI-ANS-001 - Ensure kind storage provisioner is ready
+        run: |
+          echo "===== Available Storage Classes ====="
+          kubectl get storageclass
+          echo ""
+          echo "===== Verifying 'standard' storage class ====="
+          kubectl get storageclass standard -o yaml || {
+            echo "ERROR: 'standard' storage class not found"
+            exit 1
+          }
+
       - name: Run E2E deployment test (bash script)
         # @req SCI-ANS-001 - Execute comprehensive E2E test
         # @req SCI-ANS-002 - Verify post-deploy validation
@@ -193,6 +205,18 @@ jobs:
         run: |
           helm dependency update charts/sdd-navigator
 
+      - name: Verify storage class availability
+        # @req SCI-ANS-001 - Ensure kind storage provisioner is ready
+        run: |
+          echo "===== Available Storage Classes ====="
+          kubectl get storageclass
+          echo ""
+          echo "===== Verifying 'standard' storage class ====="
+          kubectl get storageclass standard -o yaml || {
+            echo "ERROR: 'standard' storage class not found"
+            exit 1
+          }
+
       - name: Run Ansible E2E test playbook
         # @req SCI-ANS-001 - Execute E2E test via Ansible playbook
         # @req SCI-ANS-002 - Verify post-deploy validation
@@ -211,6 +235,27 @@ jobs:
         run: |
           echo "===== E2E Test Failed ====="
           kubectl -n sdd-navigator-e2e-test get all || true
+          echo ""
+          echo "===== PostgreSQL StatefulSet Status ====="
+          kubectl -n sdd-navigator-e2e-test get statefulset -o wide || true
+          echo ""
+          echo "===== PostgreSQL Pod Details ====="
+          kubectl -n sdd-navigator-e2e-test describe pod -l app.kubernetes.io/name=postgresql || true
+          echo ""
+          echo "===== PVC Status ====="
+          kubectl -n sdd-navigator-e2e-test get pvc || true
+          echo ""
+          echo "===== PV Status ====="
+          kubectl get pv || true
+          echo ""
+          echo "===== Storage Classes ====="
+          kubectl get storageclass || true
+          echo ""
+          echo "===== PostgreSQL Events ====="
+          kubectl -n sdd-navigator-e2e-test get events --sort-by='.lastTimestamp' --field-selector involvedObject.kind=StatefulSet || true
+          echo ""
+          echo "===== PostgreSQL Pod Logs ====="
+          kubectl -n sdd-navigator-e2e-test logs -l app.kubernetes.io/name=postgresql --all-containers=true --tail=50 || true
 
   summary:
     name: E2E Test Summary

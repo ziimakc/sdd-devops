@@ -311,6 +311,7 @@ timeout --signal=KILL 300 bash -c "
   ansible-playbook \
     -i '${ANSIBLE_DIR}/inventory/local.yml' \
     '${ANSIBLE_DIR}/playbook.yml' \
+    -e 'database.storage_class=standard' \
     2>&1 | tee '${TEST1_LOG}' | while IFS= read -r line; do
       # Show task names and important events
       if echo \"\$line\" | grep -qE '^TASK|^PLAY|^changed:|^ok:|^failed:|^fatal:'; then
@@ -562,6 +563,7 @@ echo "Running: ansible-playbook playbook.yml (second run)"
 if ANSIBLE_STDOUT_CALLBACK=json ansible-playbook \
   -i "${ANSIBLE_DIR}/inventory/local.yml" \
   "${ANSIBLE_DIR}/playbook.yml" \
+  -e 'database.storage_class=standard' \
   > "${TEST4_OUTPUT}" 2> "${TEST4_LOG}"; then
   
   echo -e "${GREEN}✓ Second playbook run completed successfully${NC}"

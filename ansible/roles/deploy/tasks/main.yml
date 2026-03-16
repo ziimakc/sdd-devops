@@ -41,6 +41,9 @@
           username: "{{ database.user }}"
           password: "{{ database.password }}"
           database: "{{ database.name }}"
+        primary:
+          persistence:
+            storageClass: "{{ database.storage_class | default('') }}"
 
 - name: Wait for database to be ready
   # @req SCI-ANS-001 - Verify database reaches ready state before proceeding

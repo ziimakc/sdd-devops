@@ -122,6 +122,7 @@
             primary:
               persistence:
                 size: 1Gi
+                storageClass: "standard" # @req SCI-ANS-001 - kind cluster uses 'standard' storage class
               resources:
                 requests:
                   memory: "128Mi"
@@ -208,6 +209,64 @@
         postgres_sts.resources[0].status.readyReplicas | default(0) >= 1
       retries: 40
       delay: 10
+      ignore_errors: true
+
+    - name: Debug PostgreSQL StatefulSet if not ready
+      # @req SCI-ANS-002 - Diagnostic information for troubleshooting
+      when: postgres_sts.failed | default(false) or (postgres_sts.resources[0].status.readyReplicas | default(0) < 1)
+      block:
+        - name: Get PostgreSQL Pod status
+          ansible.builtin.command:
+            cmd: kubectl get pods -n {{ test_namespace }} -l app.kubernetes.io/name=postgresql -o wide
+          register: postgres_pods
+          changed_when: false
+          failed_when: false
+
+        - name: Get PVC status
+          ansible.builtin.command:
+            cmd: kubectl get pvc -n {{ test_namespace }}
+          register: postgres_pvc
+          changed_when: false
+          failed_when: false
+
+        - name: Get PV status
+          ansible.builtin.command:
+            cmd: kubectl get pv
+          register: postgres_pv
+          changed_when: false
+          failed_when: false
+
+        - name: Get Storage Classes
+          ansible.builtin.command:
+            cmd: kubectl get storageclass
+          register: storage_classes
+          changed_when: false
+          failed_when: false
+
+        - name: Display diagnostic information
+          ansible.builtin.debug:
+            msg: |
+              PostgreSQL StatefulSet failed to become ready after 400 seconds (40 retries * 10s)
+              
+              === PostgreSQL Pods ===
+              {{ postgres_pods.stdout | default('Failed to retrieve') }}
+              
+              === PVC Status ===
+              {{ postgres_pvc.stdout | default('Failed to retrieve') }}
+              
+              === PV Status ===
+              {{ postgres_pv.stdout | default('Failed to retrieve') }}
+              
+              === Storage Classes ===
+              {{ storage_classes.stdout | default('Failed to retrieve') }}
+              
+              === StatefulSet Status ===
+              Ready Replicas: {{ postgres_sts.resources[0].status.readyReplicas | default(0) }}
+              Current Replicas: {{ postgres_sts.resources[0].status.replicas | default(0) }}
+
+        - name: Fail after diagnostics
+          ansible.builtin.fail:
+            msg: "PostgreSQL StatefulSet '{{ test_release_name }}-postgresql' did not become ready. See diagnostic output above."
 
     - name: Wait for API deployment to exist
       # @req SCI-ANS-001 - Verify API deployment was created
@@ -421,6 +480,7 @@
             primary:
               persistence:
                 size: 1Gi
+                storageClass: "standard" # @req SCI-ANS-001 - kind cluster uses 'standard' storage class
               resources:
                 requests:
                   memory: "128Mi"

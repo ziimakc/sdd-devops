@@ -23,6 +23,7 @@ database:
   password: "{{ lookup('env', 'DB_PASSWORD') | default('changeme', true) }}"
   name: sdd_navigator
   port: 5432
+  storage_class: "" # @req SCI-HELM-002 - Empty = use cluster default; override for kind: "standard"
 
 validation:
   api_healthcheck_path: /healthcheck
