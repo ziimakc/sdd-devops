@@ -64,6 +64,12 @@ if ! command -v kubeconform &> /dev/null; then
     echo "⚠️  kubeconform not found. Skipping manifest validation."
     echo "    Install from: https://github.com/yannh/kubeconform"
 else
+    echo "Adding Bitnami Helm repository..."
+    helm repo add bitnami https://charts.bitnami.com/bitnami 2>/dev/null || true
+    
+    echo "Building Helm dependencies..."
+    helm dependency build charts/sdd-navigator
+    
     TEMP_DIR=$(mktemp -d)
     helm template sdd-navigator charts/sdd-navigator \
         --set database.password=test-password \
