@@ -39,7 +39,7 @@ jobs:
         # @req SCI-ANS-001 - Install required tools for orchestration
         run: |
           pip install ansible-core>=2.14 ansible-lint
-          pip install kubernetes
+          pip install -r ansible/requirements.txt
 
       - name: Install Ansible collections
         # @req SCI-ANS-001 - Install kubernetes.core collection
@@ -148,7 +148,7 @@ jobs:
         # @req SCI-ANS-001 - Install required tools
         run: |
           pip install ansible-core>=2.14
-          pip install kubernetes
+          pip install -r ansible/requirements.txt
 
       - name: Install Ansible collections
         # @req SCI-ANS-001 - Install kubernetes.core collection
