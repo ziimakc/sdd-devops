@@ -5,13 +5,16 @@ FROM python:3.11-alpine
 
 WORKDIR /app
 
+# Install wget for healthcheck validation
+RUN apk add --no-cache wget
+
 # Create simple HTTP server script
 RUN cat <<'EOF' > server.py
 import http.server
 import socketserver
 import os
 
-PORT = int(os.environ.get("PORT", 8080))
+PORT = int(os.environ.get("API_PORT", 8080))
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
