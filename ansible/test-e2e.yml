@@ -140,8 +140,64 @@
       ansible.builtin.set_fact:
         first_deploy_success: "{{ helm_deploy_first is succeeded }}"
 
+    - name: Debug - Show Helm deployment result
+      # @req SCI-ANS-002 - Display deployment status for debugging
+      ansible.builtin.debug:
+        msg: |
+          Helm deployment task result: {{ 'SUCCESS' if helm_deploy_first is succeeded else 'FAILED' }}
+          Changed: {{ helm_deploy_first.changed }}
+
+    - name: Verify Helm release was created
+      # @req SCI-ANS-002 - Fail fast if Helm deployment failed silently
+      ansible.builtin.command:
+        cmd: helm list -n {{ test_namespace }} -o json
+      register: helm_list
+      changed_when: false
+
+    - name: Parse Helm release list
+      ansible.builtin.set_fact:
+        helm_releases: "{{ helm_list.stdout | from_json }}"
+
+    - name: Assert Helm release exists
+      # @req SCI-ANS-002 - Verify release was actually created
+      ansible.builtin.assert:
+        that:
+          - helm_releases | length > 0
+          - helm_releases | selectattr('name', 'eq', test_release_name) | list | length > 0
+        fail_msg: "Helm release '{{ test_release_name }}' was not created. Deployment failed silently."
+        success_msg: "Helm release '{{ test_release_name }}' confirmed in namespace {{ test_namespace }}"
+
+    - name: Debug - Show deployed resources
+      # @req SCI-ANS-002 - Display what resources were actually created
+      ansible.builtin.command:
+        cmd: kubectl get all -n {{ test_namespace }}
+      register: deployed_resources
+      changed_when: false
+      failed_when: false
+
+    - name: Display deployed resources
+      ansible.builtin.debug:
+        msg: "{{ deployed_resources.stdout_lines }}"
+
+    - name: Wait for PostgreSQL StatefulSet to exist
+      # @req SCI-ANS-001 - Verify StatefulSet was created before waiting for ready status
+      kubernetes.core.k8s_info:
+        kind: StatefulSet
+        namespace: "{{ test_namespace }}"
+        name: "{{ test_release_name }}-postgresql"
+      register: postgres_sts_check
+      until: postgres_sts_check.resources | length > 0
+      retries: 12
+      delay: 5
+
+    - name: Fail if StatefulSet not created
+      # @req SCI-ANS-002 - Fail fast if resource creation failed
+      ansible.builtin.fail:
+        msg: "PostgreSQL StatefulSet '{{ test_release_name }}-postgresql' was not created after 60 seconds"
+      when: postgres_sts_check.resources | length == 0
+
     - name: Wait for PostgreSQL StatefulSet to be ready
-      # @req SCI-ANS-001 - Wait for database first
+      # @req SCI-ANS-001 - Wait for database first (reduced timeout since existence verified)
       kubernetes.core.k8s_info:
         kind: StatefulSet
         namespace: "{{ test_namespace }}"
@@ -150,11 +206,30 @@
       until: >
         postgres_sts.resources | length > 0 and
         postgres_sts.resources[0].status.readyReplicas | default(0) >= 1
-      retries: 60
+      retries: 40
       delay: 10
 
+    - name: Wait for API deployment to exist
+      # @req SCI-ANS-001 - Verify API deployment was created
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: "{{ test_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/component=api"
+          - "app.kubernetes.io/instance={{ test_release_name }}"
+      register: api_deploy_check
+      until: api_deploy_check.resources | length > 0
+      retries: 12
+      delay: 5
+
+    - name: Fail if API deployment not created
+      # @req SCI-ANS-002 - Fail fast if resource creation failed
+      ansible.builtin.fail:
+        msg: "API deployment was not created after 60 seconds"
+      when: api_deploy_check.resources | length == 0
+
     - name: Wait for API deployment to be ready
-      # @req SCI-ANS-001 - Wait for API after database
+      # @req SCI-ANS-001 - Wait for API after database (reduced timeout since existence verified)
       kubernetes.core.k8s_info:
         kind: Deployment
         namespace: "{{ test_namespace }}"
@@ -165,11 +240,30 @@
       until: >
         api_deploy.resources | length > 0 and
         api_deploy.resources[0].status.readyReplicas | default(0) >= 1
-      retries: 60
+      retries: 40
       delay: 10
 
+    - name: Wait for frontend deployment to exist
+      # @req SCI-ANS-001 - Verify frontend deployment was created
+      kubernetes.core.k8s_info:
+        kind: Deployment
+        namespace: "{{ test_namespace }}"
+        label_selectors:
+          - "app.kubernetes.io/component=frontend"
+          - "app.kubernetes.io/instance={{ test_release_name }}"
+      register: frontend_deploy_check
+      until: frontend_deploy_check.resources | length > 0
+      retries: 12
+      delay: 5
+
+    - name: Fail if frontend deployment not created
+      # @req SCI-ANS-002 - Fail fast if resource creation failed
+      ansible.builtin.fail:
+        msg: "Frontend deployment was not created after 60 seconds"
+      when: frontend_deploy_check.resources | length == 0
+
     - name: Wait for frontend deployment to be ready
-      # @req SCI-ANS-001 - Wait for frontend
+      # @req SCI-ANS-001 - Wait for frontend (reduced timeout since existence verified)
       kubernetes.core.k8s_info:
         kind: Deployment
         namespace: "{{ test_namespace }}"
@@ -180,7 +274,7 @@
       until: >
         frontend_deploy.resources | length > 0 and
         frontend_deploy.resources[0].status.readyReplicas | default(0) >= 1
-      retries: 60
+      retries: 40
       delay: 10
 
     - name: Wait for all pods to be ready

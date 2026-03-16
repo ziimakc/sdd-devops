@@ -55,6 +55,21 @@ curl http://localhost:8080/healthcheck
 | `scripts/check-traceability.sh` | Verify @req annotations present |
 | `scripts/validate-req-references.sh` | Verify @req references are valid |
 | `scripts/lint-local.sh` | Lint all infrastructure code |
+| `scripts/run-ci-local.sh` | Run GitHub Actions CI locally with act |
+
+## Running CI Locally
+
+Test GitHub Actions CI locally with [act](https://github.com/nektos/act) (requires Docker):
+
+```bash
+# Run all checks (~40s)
+./scripts/run-ci-local.sh
+
+# Run specific job
+./temp/bin/act -W .github/workflows/infra-ci.yml -j lint-helm
+```
+
+First run auto-installs act to `temp/bin/` and downloads ~500MB Docker image. Validates: YAML syntax, Ansible playbooks, Helm charts, K8s manifests, traceability annotations.
 
 ## PostgreSQL: Bitnami Chart Choice
 
