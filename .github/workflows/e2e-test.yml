@@ -88,6 +88,31 @@ jobs:
         run: |
           helm dependency update charts/sdd-navigator
 
+      - name: Build test images
+        # @req SCI-CI-001 - Build minimal test images for E2E validation
+        # Note: Only build API/frontend test images, use real Bitnami PostgreSQL
+        run: |
+          echo "===== Building test API image ====="
+          docker build -t sdd-coverage-api:0.1.0 -f test-images/api.Dockerfile test-images/
+          echo "===== Building test frontend image ====="
+          docker build -t sdd-navigator-frontend:0.1.0 -f test-images/frontend.Dockerfile test-images/
+
+      - name: Pre-pull and load images into Kind
+        # @req SCI-CI-001 - Avoid Docker Hub rate limits in CI
+        run: |
+          echo "===== Pre-pulling PostgreSQL image ====="
+          docker pull docker.io/bitnami/postgresql:16.2.0-debian-12-r13
+          echo "===== Pre-pulling volumePermissions init container image ====="
+          docker pull docker.io/bitnami/os-shell:11-debian-11-r93
+          echo "===== Loading test API image into Kind cluster ====="
+          kind load docker-image sdd-coverage-api:0.1.0 --name sdd-navigator-test
+          echo "===== Loading test frontend image into Kind cluster ====="
+          kind load docker-image sdd-navigator-frontend:0.1.0 --name sdd-navigator-test
+          echo "===== Loading PostgreSQL image into Kind cluster ====="
+          kind load docker-image docker.io/bitnami/postgresql:16.2.0-debian-12-r13 --name sdd-navigator-test
+          echo "===== Loading volumePermissions image into Kind cluster ====="
+          kind load docker-image docker.io/bitnami/os-shell:11-debian-11-r93 --name sdd-navigator-test
+
       - name: Verify storage class availability
         # @req SCI-ANS-001 - Ensure kind storage provisioner is ready
         run: |
@@ -204,6 +229,31 @@ jobs:
       - name: Build Helm chart dependencies
         run: |
           helm dependency update charts/sdd-navigator
+
+      - name: Build test images
+        # @req SCI-CI-001 - Build minimal test images for E2E validation
+        # Note: Only build API/frontend test images, use real Bitnami PostgreSQL
+        run: |
+          echo "===== Building test API image ====="
+          docker build -t sdd-coverage-api:0.1.0 -f test-images/api.Dockerfile test-images/
+          echo "===== Building test frontend image ====="
+          docker build -t sdd-navigator-frontend:0.1.0 -f test-images/frontend.Dockerfile test-images/
+
+      - name: Pre-pull and load images into Kind
+        # @req SCI-CI-001 - Avoid Docker Hub rate limits in CI
+        run: |
+          echo "===== Pre-pulling PostgreSQL image ====="
+          docker pull docker.io/bitnami/postgresql:16.2.0-debian-12-r13
+          echo "===== Pre-pulling volumePermissions init container image ====="
+          docker pull docker.io/bitnami/os-shell:11-debian-11-r93
+          echo "===== Loading test API image into Kind cluster ====="
+          kind load docker-image sdd-coverage-api:0.1.0 --name sdd-navigator-e2e-test
+          echo "===== Loading test frontend image into Kind cluster ====="
+          kind load docker-image sdd-navigator-frontend:0.1.0 --name sdd-navigator-e2e-test
+          echo "===== Loading PostgreSQL image into Kind cluster ====="
+          kind load docker-image docker.io/bitnami/postgresql:16.2.0-debian-12-r13 --name sdd-navigator-e2e-test
+          echo "===== Loading volumePermissions image into Kind cluster ====="
+          kind load docker-image docker.io/bitnami/os-shell:11-debian-11-r93 --name sdd-navigator-e2e-test
 
       - name: Verify storage class availability
         # @req SCI-ANS-001 - Ensure kind storage provisioner is ready

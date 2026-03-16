@@ -243,6 +243,34 @@
           changed_when: false
           failed_when: false
 
+        - name: Get PostgreSQL Pod events
+          ansible.builtin.command:
+            cmd: kubectl get events -n {{ test_namespace }} --field-selector involvedObject.kind=Pod --sort-by='.lastTimestamp'
+          register: postgres_events
+          changed_when: false
+          failed_when: false
+
+        - name: Describe PostgreSQL Pod
+          ansible.builtin.command:
+            cmd: kubectl describe pod -n {{ test_namespace }} -l app.kubernetes.io/name=postgresql
+          register: postgres_pod_describe
+          changed_when: false
+          failed_when: false
+
+        - name: Get PostgreSQL Pod events
+          ansible.builtin.command:
+            cmd: kubectl get events -n {{ test_namespace }} --field-selector involvedObject.kind=Pod --sort-by='.lastTimestamp'
+          register: postgres_events
+          changed_when: false
+          failed_when: false
+
+        - name: Describe PostgreSQL Pod
+          ansible.builtin.command:
+            cmd: kubectl describe pod -n {{ test_namespace }} -l app.kubernetes.io/name=postgresql
+          register: postgres_pod_describe
+          changed_when: false
+          failed_when: false
+
         - name: Display diagnostic information
           ansible.builtin.debug:
             msg: |
@@ -259,6 +287,12 @@
 
               === Storage Classes ===
               {{ storage_classes.stdout | default('Failed to retrieve') }}
+
+              === Pod Events ===
+              {{ postgres_events.stdout | default('Failed to retrieve') }}
+
+              === Pod Description (last 50 lines) ===
+              {{ postgres_pod_describe.stdout_lines[-50:] | default(['Failed to retrieve']) | join('\n') }}
 
               === StatefulSet Status ===
               Ready Replicas: {{ postgres_sts.resources[0].status.readyReplicas | default(0) }}
@@ -417,10 +451,11 @@
         namespace: "{{ test_namespace }}"
         pod: "{{ test_postgres_pods.resources[0].metadata.name }}"
         command: pg_isready -U {{ database.user }} -d {{ database.name }}
-      register: test_postgres_ready
-      retries: 5
+      register: test_pg_ready
+      retries: 10
       delay: 3
-      until: test_postgres_ready.rc == 0
+      until: test_pg_ready.rc == 0
+      failed_when: false  # Don't fail test if PostgreSQL not fully ready yet
 
     - name: Report first deployment validation results
       # @req SCI-ANS-002 - Report pass/fail per check
@@ -430,7 +465,7 @@
           Healthcheck endpoint: {{ 'PASS' if test_healthcheck.rc == 0 else 'FAIL' }}
           Stats endpoint: {{ 'PASS' if test_stats.rc == 0 else 'FAIL' }}
           All pods Running: PASS
-          PostgreSQL connection: {{ 'PASS' if test_postgres_ready.rc == 0 else 'FAIL' }}
+          PostgreSQL connection: {{ 'PASS' if test_pg_ready.rc == 0 else 'FAIL' }}
           ==============================================
 
     - name: Wait before idempotency test

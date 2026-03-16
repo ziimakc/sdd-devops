@@ -82,7 +82,9 @@ postgresql:
   volumePermissions: # @req SCI-HELM-002
     enabled: true
     image:
-      tag: latest
+      registry: docker.io
+      repository: bitnami/os-shell
+      tag: 11-debian-11-r93 # @req SCI-SEC-001 - explicit version, no latest
   image:
     registry: docker.io
     repository: bitnami/postgresql
