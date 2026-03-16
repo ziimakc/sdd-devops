@@ -42,6 +42,41 @@
           password: "{{ database.password }}"
           database: "{{ database.name }}"
 
-# Note: Explicit pod wait tasks removed - Helm chart deployment with wait=true
-# already ensures all pods reach ready state before returning success.
-# This satisfies SCI-ANS-001 requirement for correct deployment order.
+- name: Wait for database to be ready
+  # @req SCI-ANS-001 - Verify database reaches ready state before proceeding
+  # @req SCI-ANS-003 - kubectl wait is idempotent
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=ready pod
+      -l app.kubernetes.io/name=postgresql
+      -n {{ kubernetes.namespace }}
+      --timeout={{ helm.wait_timeout }}
+  register: deploy_database_ready
+  failed_when: deploy_database_ready.rc != 0
+  changed_when: false
+
+- name: Wait for API pods to be ready
+  # @req SCI-ANS-001 - Verify API reaches ready state before proceeding
+  # @req SCI-ANS-003 - kubectl wait is idempotent
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=ready pod
+      -l app.kubernetes.io/component=api,app.kubernetes.io/instance={{ helm.release_name }}
+      -n {{ kubernetes.namespace }}
+      --timeout={{ helm.wait_timeout }}
+  register: deploy_api_ready
+  failed_when: deploy_api_ready.rc != 0
+  changed_when: false
+
+- name: Wait for frontend pods to be ready
+  # @req SCI-ANS-001 - Verify frontend reaches ready state before proceeding
+  # @req SCI-ANS-003 - kubectl wait is idempotent
+  ansible.builtin.command:
+    cmd: >
+      kubectl wait --for=condition=ready pod
+      -l app.kubernetes.io/component=frontend,app.kubernetes.io/instance={{ helm.release_name }}
+      -n {{ kubernetes.namespace }}
+      --timeout={{ helm.wait_timeout }}
+  register: deploy_frontend_ready
+  failed_when: deploy_frontend_ready.rc != 0
+  changed_when: false

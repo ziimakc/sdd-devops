@@ -33,12 +33,12 @@ pass() {
 
 fail() {
   echo -e "${RED}✗${NC} $1"
-  ((ERRORS++))
+  ((ERRORS++)) || true
 }
 
 warn() {
   echo -e "${YELLOW}⚠${NC} $1"
-  ((WARNINGS++))
+  ((WARNINGS++)) || true
 }
 
 info() {
@@ -381,7 +381,7 @@ echo ""
 # Check ansible-playbook is available
 if command -v ansible-playbook &> /dev/null; then
   pass "ansible-playbook found in PATH"
-  
+
   # Syntax check
   if ansible-playbook "${ANSIBLE_DIR}/playbook.yml" -i "${ANSIBLE_DIR}/inventory/local.yml" --syntax-check &> /dev/null; then
     pass "Playbook syntax is valid"
@@ -395,7 +395,7 @@ fi
 # Check ansible-lint is available
 if command -v ansible-lint &> /dev/null; then
   pass "ansible-lint found in PATH"
-  
+
   # Run ansible-lint
   if ansible-lint "${ANSIBLE_DIR}/playbook.yml" "${ANSIBLE_DIR}/roles/" --profile production 2>&1 | grep -q "Passed:"; then
     pass "ansible-lint validation passed"
@@ -409,7 +409,7 @@ fi
 # Check yamllint is available
 if command -v yamllint &> /dev/null; then
   pass "yamllint found in PATH"
-  
+
   # Run yamllint on ansible directory
   if yamllint "${ANSIBLE_DIR}" &> /dev/null; then
     pass "yamllint validation passed"
